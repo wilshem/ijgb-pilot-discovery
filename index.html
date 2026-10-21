@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IJGB Pilot Discovery</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* One column, one step at a time; the IJGB navy and Archivo of the other IJGB forms. */
+:root{--paper:#FFFFFF;--ink:#0B1520;--navy:#1F4E79;--mist:#EDF2F7;--line:#C9D5E2;--muted:#4A5563;--warn:#9B2C2C;--ok:#2E7A5A;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0E1620;--ink:#F2F5F8;--navy:#8FB8DE;--mist:#18232F;--line:#2C3B4B;--muted:#A9B6C4;--warn:#F2A0A0;--ok:#7CC9A4;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#0E1620;--ink:#F2F5F8;--navy:#8FB8DE;--mist:#18232F;--line:#2C3B4B;--muted:#A9B6C4;--warn:#F2A0A0;--ok:#7CC9A4;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Archivo",Arial,Helvetica,sans-serif;font-size:17px;line-height:1.55}
+.wrap{max-width:700px;margin:0 auto;padding-block:28px 72px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+header img{width:44px;height:auto}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header img{filter:invert(1)}}
+:root[data-theme="dark"] header img{filter:invert(1)}
+header .t{font-weight:600;font-size:15px;color:var(--muted)}
+.prog{margin-bottom:26px}
+.prog .lbl{font-size:14px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bar{height:6px;background:var(--mist);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--navy);transition:width .3s}
+h1{font-size:30px;line-height:1.15;margin:0 0 12px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.intro{margin:0 0 8px;color:var(--ink)}
+.intro.muted{color:var(--muted);font-size:15.5px}
+.q{margin:26px 0 0;border:0;padding:0;min-width:0}
+.q > legend,.q > label.qt{display:block;font-weight:600;margin-bottom:8px;padding:0}
+.req{color:var(--warn);font-weight:600}
+.hint{font-size:14.5px;color:var(--muted);margin:-2px 0 10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--paper)}
+.opt:hover{border-color:var(--navy)}
+.opt input{margin:4px 0 0;accent-color:var(--navy);width:18px;height:18px;flex:none}
+.opt:has(input:checked){border-color:var(--navy);background:var(--mist)}
+.opt:has(input:focus-visible){outline:3px solid var(--navy);outline-offset:2px}
+.opt .sub{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+input[type=text],input[type=email],input[type=tel],input[type=date],textarea{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+textarea{min-height:96px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+.nav{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:600;font-size:16px;padding:12px 22px;border-radius:10px;border:1.5px solid var(--navy);cursor:pointer}
+.btn.primary{background:var(--navy);color:var(--paper)}
+.btn.ghost{background:var(--paper);color:var(--navy)}
+.btn[disabled]{opacity:.6;cursor:default}
+.err{color:var(--warn);font-weight:600;margin-top:14px;min-height:1.2em}
+.summary{white-space:pre-wrap;font-size:14.5px;background:var(--mist);border-radius:12px;padding:16px;max-height:420px;overflow:auto;overflow-wrap:anywhere}
+.status{margin-top:12px;font-weight:600}
+.status.ok{color:var(--ok)}
+.foot{margin-top:56px;font-size:14px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap}
+.foot button{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+.tag{font-size:13px;color:var(--muted)}
+@media (max-width:520px){h1{font-size:25px}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><img src="data:image/png;base64,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" alt="It Just Gets Better logo"><div class="t">It Just Gets Better<br>Pilot Discovery</div></header>
+<main id="app" aria-live="polite"></main>
+<noscript><p>This form needs JavaScript. Please turn it on, or ask your IJGB contact for a copy of the questions.</p></noscript>
+</div>
+<script>
+// ---- setup ----
+const SHEET_URL = "";                    // The Google Apps Script web app URL (README, step 4)
+const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
+const FORM_VERSION = "2026-10-20";
+
+// ?client=<tag> on the link labels every answer with the client it was sent to.
+const CLIENT = (() => {
+  try {
+    const raw = new URLSearchParams(location.search).get("client") || "";
+    return /^[a-z0-9][a-z0-9-]{0,63}$/i.test(raw) ? raw.toLowerCase() : "";
+  } catch (e) { return ""; }
+})();
+const STORE_KEY = "ijgb-discovery:" + (CLIENT || "general");
+
+// ---- questions ----
+// type: text | email | tel | date | textarea | choice (one) | multi (any). show(a) hides a question
+// or a whole step until an earlier answer makes it relevant.
+const has = (a, k, v) => Array.isArray(a[k]) && a[k].includes(v);
+const isMs = a => a.mail_system === "microsoft365";
+const isGoogle = a => a.mail_system === "google";
+const usesRecords = a => has(a, "services", "records") || has(a, "services", "binders") || has(a, "services", "final");
+const NOT_SURE = ["not_sure", "Not sure"];
+
+const STEPS = [
+  { id: "about", title: "About you",
+    intro: "These questions help us plan a pilot of the IJGB platform around your organization's records. Most take a click. If you don't know an answer, choose \"Not sure\" or leave it blank: we'll go through it together.",
+    note: "Your progress is saved in this browser, so you can stop and come back on the same device.",
+    qs: [
+      { id: "org_name", type: "text", label: "Organization's legal name", hint: "As it should appear on reports.", req: true },
+      { id: "contact_name", type: "text", label: "Your name", req: true },
+      { id: "contact_role", type: "text", label: "Your role" },
+      { id: "contact_email", type: "email", label: "Your email", req: true },
+      { id: "contact_phone", type: "tel", label: "Best phone number", hint: "Optional." },
+    ] },
+  { id: "org", title: "Your organization",
+    qs: [
+      { id: "org_type", type: "choice", label: "What kind of organization is it?", options: [["nonprofit", "Non-profit"], ["business", "Private business"], ["other", "Something else"]] },
+      { id: "email_domains", type: "text", label: "Email domain(s) your staff use", hint: "For example example.org. Include any others staff send from." },
+      { id: "timezone", type: "choice", label: "Time zone for dates and times", options: [["America/New_York", "Eastern"], ["America/Chicago", "Central"], ["America/Denver", "Mountain"], ["America/Phoenix", "Arizona"], ["America/Los_Angeles", "Pacific"], ["America/Anchorage", "Alaska"], ["Pacific/Honolulu", "Hawaii"], ["other", "Other"]] },
+      { id: "records_contact", type: "text", label: "Who should reports name as the contact for records?", hint: "An office or a person, for example \"the finance office\"." },
+      { id: "prompt", type: "multi", label: "What prompted you to look at this now?", options: [["records_request", "A records request we need to answer"], ["legal", "A legal matter, dispute or audit"], ["leadership", "A leadership change"], ["agreements", "We've lost track of our agreements"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"], ["other", "Something else"]] },
+      { id: "prompt_other", type: "textarea", label: "Tell us more", show: a => has(a, "prompt", "other") },
+      { id: "success", type: "textarea", label: "At the end of the pilot, what result would make it a success for you?" },
+      { id: "pilot_start", type: "date", label: "When would you like the pilot to start?" },
+      { id: "first_deadline", type: "date", label: "Is there a deadline we should know about?", hint: "For example, a response date for a request. Leave blank if none." },
+    ] },
+  { id: "services", title: "What you'd like help with",
+    qs: [
+      { id: "services", type: "multi", label: "Which of these would you like to use? Choose all that apply.", options: [
+        ["records", "Searching email", "Find every email and attachment on a topic across chosen mailboxes and dates."],
+        ["binders", "Review binders", "One organized PDF per request for staff or counsel to review, with a decision log."],
+        ["final", "Copies to release", "A clean copy for the requester, with duplicates and junk mail removed and every removal listed."],
+        ["contracts", "Contract review", "Find your agreements, build a register, list what's missing, and a calendar of deadlines."],
+        ["readiness", "Transition readiness", "Prepare for a leadership change, grant audit, or sale: who does what, and which accounts depend on one person."],
+        NOT_SURE] },
+      { id: "first_request", type: "textarea", label: "Describe the first search you'd want to run", hint: "Who asked, which mailboxes, what dates, what topic, and when it's due.", show: usesRecords },
+      { id: "request_volume", type: "choice", label: "Roughly how many records requests do you handle a year?", show: usesRecords, options: [["under_5", "Fewer than 5"], ["5_20", "5 to 20"], ["20_50", "20 to 50"], ["over_50", "More than 50"], NOT_SURE] },
+      { id: "request_reach", type: "choice", label: "How far back do requests usually reach?", show: usesRecords, options: [["1y", "About a year"], ["3y", "About 3 years"], ["5y", "About 5 years"], ["7y", "7 years or more"], NOT_SURE] },
+    ] },
+  { id: "mail", title: "Your email system",
+    intro: "Some of these are easiest for whoever manages your email accounts to answer. It's fine to forward the link to them.",
+    qs: [
+      { id: "mail_system", type: "choice", label: "Which email system does your organization use?", req: true, options: [["microsoft365", "Microsoft 365", "Outlook with an Exchange Online account"], ["google", "Google Workspace", "Gmail on your own domain"], ["other", "Something else"], NOT_SURE] },
+      { id: "admin_who", type: "choice", label: "Who manages your email accounts?", options: [["inhouse", "Someone on our staff"], ["provider", "An outside IT provider"], NOT_SURE] },
+      { id: "admin_contact", type: "text", label: "Their name and email", hint: "So we can send them the setup steps." },
+      { id: "ms_licence", type: "multi", label: "Which Microsoft 365 plan(s) do you have?", hint: "Your administrator can see this under Billing in the Microsoft 365 admin center.", show: isMs, options: [["basic", "Business Basic"], ["standard", "Business Standard"], ["premium", "Business Premium"], ["e3", "E3 (or Office 365 E3)"], ["e5", "E5"], NOT_SURE] },
+      { id: "ms_setup", type: "choice", label: "Could your administrator give the platform read-only access to chosen mailboxes?", hint: "It takes about 30 minutes: register an app, approve read-only mail access, limit it to the mailboxes you choose, and add our certificate. We provide step-by-step instructions. You can remove the access at any time.", show: isMs, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
+      { id: "ms_archive", type: "choice", label: "Do any mailboxes have an online archive (\"In-Place Archive\") with mail in it?", hint: "Your administrator can check in the Exchange admin center: Recipients, Mailboxes, select a mailbox, then Others, Archive mailbox.", show: isMs, options: [["yes", "Yes, and it holds mail"], ["on_unknown", "It's turned on, not sure if it's used"], ["no", "No"], NOT_SURE] },
+      { id: "ms_retention", type: "choice", label: "Does a policy move or delete older mail automatically?", show: isMs, options: [["none", "No"], ["1y", "Yes, after about a year"], ["2y", "Yes, after about two years"], ["other", "Yes, on another schedule"], NOT_SURE] },
+      { id: "ms_hold", type: "choice", label: "Is any mailbox under a legal hold?", show: isMs, options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "ms_outlook", type: "choice", label: "Which Outlook do your staff use?", show: isMs, options: [["classic", "Classic Outlook for Windows", "Has File, Open & Export"], ["new", "New Outlook for Windows"], ["web_mac", "Outlook on the web, or Outlook for Mac"], NOT_SURE] },
+      { id: "g_edition", type: "choice", label: "Which Google Workspace edition do you have?", show: isGoogle, options: [["starter", "Business Starter"], ["standard", "Business Standard"], ["plus", "Business Plus"], ["enterprise", "Enterprise"], ["nonprofit_edu", "Nonprofits or Education"], NOT_SURE] },
+      { id: "g_delegation", type: "choice", label: "Could a Google Workspace super administrator approve read-only access?", hint: "One step in the Google Admin console, with no password or key shared. Google's setting covers all mailboxes, so the platform itself limits reading to the mailboxes you list and logs each one. You can remove it in one step.", show: isGoogle, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
+      { id: "other_system", type: "text", label: "Which system or provider is it?", show: a => a.mail_system === "other" },
+      { id: "other_export", type: "multi", label: "Can you export mail from it in any of these formats?", show: a => a.mail_system === "other" || a.mail_system === "not_sure", options: [["mbox", "MBOX"], ["pst", "PST (Outlook data file)"], ["eml", "EML files"], NOT_SURE] },
+    ] },
+  { id: "mailboxes", title: "Mailboxes",
+    intro: "Only the mailboxes you list here are ever read.",
+    qs: [
+      { id: "mailboxes", type: "textarea", label: "Which mailboxes should be searchable?", hint: "One email address per line, with the person's role if helpful." },
+      { id: "shared_mailboxes", type: "textarea", label: "Shared mailboxes or group inboxes that hold records", hint: "For example info@ or finance@. Leave blank if none." },
+      { id: "sensitive", type: "choice", label: "Should any of these be limited to certain people?", hint: "For example a former director's, HR's, or legal counsel's mailbox.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "sensitive_list", type: "textarea", label: "Which mailboxes, and who may search them?", show: a => a.sensitive === "yes" },
+      { id: "departed", type: "multi", label: "What happens to a mailbox when someone leaves?", options: [["active", "It stays active"], ["shared", "It becomes a shared mailbox"], ["deleted", "It's deleted"], ["varies", "It varies"], NOT_SURE] },
+      { id: "archive_start", type: "choice", label: "How far back should we copy email?", hint: "Further back takes longer the first time.", options: [["3y", "3 years"], ["5y", "5 years"], ["7y", "7 years"], ["10y", "10 years"], ["all", "Everything available"], NOT_SURE] },
+      { id: "deleted_mail", type: "choice", label: "Should we also keep a copy of mail in Deleted Items or Trash?", hint: "Deleting mail in your mailbox never deletes our copy.", options: [["yes", "Yes (recommended)"], ["no", "No"], NOT_SURE] },
+      { id: "mailbox_size", type: "text", label: "Roughly how large are these mailboxes in total?", hint: "Your administrator can see each mailbox's size. An estimate is fine, for example \"about 200 GB\"." },
+      { id: "old_systems", type: "choice", label: "Is there email from an earlier system that searches should cover?", hint: "For example an old provider, or a former employee's account that was closed.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "old_systems_detail", type: "textarea", label: "Tell us about it", show: a => a.old_systems === "yes" },
+      { id: "old_formats", type: "multi", label: "Can that mail be exported in any of these formats?", show: a => a.old_systems === "yes", options: [["mbox", "MBOX"], ["pst", "PST (Outlook data file)"], ["eml", "EML files"], NOT_SURE] },
+    ] },
+  { id: "hosting", title: "Where it runs and who uses it",
+    qs: [
+      { id: "hosting", type: "choice", label: "Where would you prefer your copy of the email to live?", options: [
+        ["hosted", "Hosted by IJGB", "A dedicated cloud account for your organization alone, encrypted, shared with no other client."],
+        ["onsite", "On a device at your office", "Your email copy stays on a computer you control."],
+        ["not_sure", "Not sure: help us decide"]] },
+      { id: "budget", type: "choice", label: "What monthly budget fits for hosting?", hint: "Hosting cost depends mostly on how much email you keep.", show: a => a.hosting !== "onsite", options: [["under_100", "Under $100"], ["100_250", "$100 to $250"], ["250_600", "$250 to $600"], ["over_600", "More than $600"], NOT_SURE] },
+      { id: "device_encryption", type: "choice", label: "Does the device have full-disk encryption turned on (BitLocker or similar)?", show: a => a.hosting === "onsite", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "residency", type: "choice", label: "Does your data need to stay in a particular place?", options: [["none", "No requirement"], ["us", "It must stay in the United States"], ["other", "Another requirement"], NOT_SURE] },
+      { id: "users", type: "textarea", label: "Who will run searches or reviews?", hint: "Names and roles." },
+      { id: "restrict", type: "choice", label: "Should everyone listed be able to search every mailbox?", options: [["all", "Yes"], ["limit", "No, some mailboxes should be limited"], NOT_SURE] },
+      { id: "access_approver", type: "text", label: "Who can approve IJGB staff reading your mail for a short support window?", hint: "IJGB staff can't read your mail by default. Access is granted to a named person for a window you approve." },
+      { id: "sync_freq", type: "choice", label: "How often should new email be copied?", options: [["hourly", "Every hour (default)"], ["daily", "Once a day"], NOT_SURE] },
+    ] },
+  { id: "records", title: "Searching email and releasing records", show: usesRecords,
+    qs: [
+      { id: "terms", type: "textarea", label: "Words or phrases you often search for", hint: "Keep phrases together, for example \"grant agreement\"." },
+      { id: "signature_text", type: "textarea", label: "Text in your staff email signatures", hint: "For example your street address and website, so they don't count as matches." },
+      { id: "disclaimers", type: "textarea", label: "Standard disclaimers or footers to ignore", hint: "Leave blank if none." },
+      { id: "recipients", type: "text", label: "Who should receive the search results?" },
+      { id: "reviewers", type: "multi", label: "Who decides what is released?", options: [["staff", "Our staff"], ["counsel", "Outside counsel"], ["board", "Our board or a committee"], ["other", "Someone else"]] },
+      { id: "redaction", type: "choice", label: "How do you redact released records?", options: [["acrobat", "Adobe Acrobat"], ["other_tool", "Another tool"], ["none", "We don't usually redact"], NOT_SURE] },
+      { id: "redaction_tool", type: "text", label: "Which tool?", show: a => a.redaction === "other_tool" },
+      { id: "release_statement", type: "textarea", label: "Wording for the statement on released copies", hint: "For example \"Reviewed and cleared for release by ...\". Leave blank to use ours." },
+      { id: "junk_senders", type: "textarea", label: "Senders whose mail is never relevant", hint: "Newsletters or vendors, for example. We'll confirm before treating them as junk." },
+    ] },
+  { id: "contracts", title: "Contract review", show: a => has(a, "services", "contracts"),
+    qs: [
+      { id: "agreements_where", type: "multi", label: "Where are your agreements kept?", options: [["shared_drive", "A shared drive or server"], ["sharepoint", "SharePoint or OneDrive"], ["gdrive", "Google Drive"], ["email", "Email attachments"], ["paper", "Paper files"], ["other", "Somewhere else"]] },
+      { id: "agreements_other", type: "textarea", label: "Any other places agreements might be?", hint: "For example files a staff member keeps, or county records." },
+      { id: "former_names", type: "textarea", label: "Other names your organization has used", hint: "Former names, \"Inc.\" or \"LLC\" versions, or trade names." },
+      { id: "notice_address", type: "text", label: "Current mailing address for legal notices" },
+      { id: "payments_file", type: "choice", label: "Could you export a list of payments (payee, amount, date)?", hint: "Optional. It helps find vendors with no agreement on file.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "scanned", type: "choice", label: "How many of your agreements are scans or photos?", options: [["most", "Most"], ["some", "Some"], ["few", "Few or none"], NOT_SURE] },
+      { id: "ai_reader", type: "choice", label: "May we use an AI reading assistant on your agreements?", hint: "Optional, off unless you approve in writing. It sees text with personal details masked, and a person checks everything it suggests.", options: [["yes", "Yes, we'll provide written approval"], ["no", "No"], ["discuss", "We'd like to discuss it"]] },
+      { id: "contracts_confirmer", type: "text", label: "Who will confirm the contract register?" },
+    ] },
+  { id: "readiness", title: "Transition readiness", show: a => has(a, "services", "readiness"),
+    qs: [
+      { id: "readiness_review", type: "multi", label: "Which review would help most?", options: [["leadership", "A leadership change"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"]] },
+      { id: "org_chart", type: "choice", label: "Do you have an org chart and job descriptions?", options: [["yes", "Yes"], ["partial", "Some"], ["no", "No"]] },
+      { id: "accounts_list", type: "choice", label: "Could you list the online accounts you rely on, and who manages each?", hint: "Never send passwords or account numbers: we only ask where credentials are kept.", options: [["yes", "Yes"], ["partial", "Partly"], ["no", "Not yet"]] },
+      { id: "staff_questionnaire", type: "choice", label: "Would staff answer a short questionnaire about what they do?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "chart_of_accounts", type: "choice", label: "Can you share a chart of accounts that marks restricted funds and grants?", show: a => a.org_type === "nonprofit", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "readiness_confirmer", type: "text", label: "Who will confirm the findings before they're shared?" },
+    ] },
+  { id: "security", title: "Security and working together",
+    qs: [
+      { id: "security_review", type: "choice", label: "Do you need a security review or vendor questionnaire completed first?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "security_review_detail", type: "textarea", label: "What does it involve?", show: a => a.security_review === "yes" },
+      { id: "regulated", type: "multi", label: "Might the mailboxes contain any of these?", options: [["health", "Health information"], ["student", "Student records"], ["card", "Payment card details"], ["personnel", "Personnel files"], ["none", "None of these"], NOT_SURE] },
+      { id: "log_viewers", type: "text", label: "Who on your side should be able to see the activity log?", hint: "Every search is logged with who ran it." },
+      { id: "retention", type: "text", label: "How long should we keep the email copy, logs and backups?", hint: "Leave blank to discuss." },
+      { id: "end_of_pilot", type: "choice", label: "If you don't continue after the pilot, what should happen to your data?", options: [["delete", "Delete it, with confirmation"], ["handover", "Hand it over to us, then delete it"], ["later", "Decide later"]] },
+      { id: "accessibility", type: "choice", label: "Will anyone reading reports use assistive technology, such as a screen reader?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "accessibility_detail", type: "textarea", label: "Tell us what would help", show: a => a.accessibility === "yes" },
+      { id: "support_contact", type: "text", label: "Your main contact for day-to-day questions" },
+      { id: "reply_time", type: "choice", label: "How quickly do you expect a reply to a support question?", options: [["same_day", "The same business day"], ["1_2_days", "Within 1 to 2 business days"], ["week", "Within a week"]] },
+      { id: "staff_changes", type: "text", label: "Who will tell us about staff changes?", hint: "New mailboxes, departures, or changes to who may search." },
+      { id: "notify", type: "multi", label: "How should we tell you about a problem?", options: [["email", "Email"], ["phone", "Phone call"], ["text", "Text message"]] },
+      { id: "change_windows", type: "textarea", label: "Times when setup work should not happen", hint: "For example month-end, or a board meeting week." },
+      { id: "anything_else", type: "textarea", label: "Anything else we should know?" },
+    ] },
+];
+
+// ---- state ----
+let st = { step: "about", a: {}, submitted: false };
+function load() { try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); if (s && s.a) st = Object.assign(st, s); } catch (e) {} }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (e) {} }
+
+const visibleSteps = () => [...STEPS.filter(s => !s.show || s.show(st.a)), { id: "review", title: "Review and send" }];
+const visibleQs = s => (s.qs || []).filter(q => !q.show || q.show(st.a));
+const optLabel = (q, v) => { const o = (q.options || []).find(o => o[0] === v); return o ? o[1] : v; };
+
+function display(q) {
+  const v = st.a[q.id];
+  if (v === undefined || v === "" || (Array.isArray(v) && !v.length)) return "";
+  if (q.type === "choice") return optLabel(q, v);
+  if (q.type === "multi") return v.map(x => optLabel(q, x)).join("; ");
+  return String(v);
+}
+
+// What the sheet receives: one column per question, only questions that apply, plus who and when.
+function record() {
+  const r = { code: SUBMIT_CODE, client: CLIENT, form_version: FORM_VERSION, submitted_at: new Date().toISOString() };
+  for (const s of visibleSteps()) for (const q of visibleQs(s)) r[q.id] = display(q);
+  return r;
+}
+
+function summaryText() {
+  const lines = [`IJGB Pilot Discovery${CLIENT ? " (" + CLIENT + ")" : ""}`, ""];
+  for (const s of visibleSteps()) {
+    const qs = visibleQs(s);
+    if (!qs.length) continue;
+    lines.push(s.title.toUpperCase());
+    for (const q of qs) lines.push(`${q.label}\n  ${display(q) || "(no answer)"}`);
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+// ---- rendering ----
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+function field(q) {
+  const v = st.a[q.id];
+  const req = q.req ? ' <span class="req" aria-hidden="true">*</span>' : "";
+  const hint = q.hint ? `<p class="hint" id="h-${q.id}">${esc(q.hint)}</p>` : "";
+  const desc = q.hint ? ` aria-describedby="h-${q.id}"` : "";
+  if (q.type === "choice" || q.type === "multi") {
+    const kind = q.type === "choice" ? "radio" : "checkbox";
+    const opts = q.options.map(([val, label, sub], i) => {
+      const on = q.type === "choice" ? v === val : Array.isArray(v) && v.includes(val);
+      return `<label class="opt"><input type="${kind}" name="${q.id}" id="${q.id}-${i}" value="${esc(val)}"${on ? " checked" : ""}><span>${esc(label)}${sub ? `<span class="sub">${esc(sub)}</span>` : ""}</span></label>`;
+    }).join("");
+    return `<fieldset class="q"${desc}><legend>${esc(q.label)}${req}</legend>${hint}<div class="opts">${opts}</div></fieldset>`;
+  }
+  const val = v === undefined ? "" : esc(v);
+  const input = q.type === "textarea"
+    ? `<textarea id="${q.id}" name="${q.id}"${desc}${q.req ? " required" : ""}>${val}</textarea>`
+    : `<input type="${q.type}" id="${q.id}" name="${q.id}" value="${val}"${desc}${q.req ? " required" : ""}${q.type === "email" ? ' autocomplete="email"' : ""}>`;
+  return `<div class="q"><label class="qt" for="${q.id}">${esc(q.label)}${req}</label>${hint}${input}</div>`;
+}
+
+function progress(steps, i) {
+  const pct = Math.round((i / (steps.length - 1)) * 100);
+  return `<div class="prog"><div class="lbl"><span>Step ${i + 1} of ${steps.length}</span>${CLIENT ? `<span class="tag">Link for ${esc(CLIENT)}</span>` : ""}</div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Progress"><i style="width:${pct}%"></i></div></div>`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  if (st.submitted) {
+    app.innerHTML = `<h1>Thank you</h1><p class="intro">Your answers were sent to It Just Gets Better. We'll review them and be in touch to go through them together.</p>
+      <p class="intro muted">If you'd like a copy for your records, or we don't hear back from you that they arrived, copy your answers below.</p>
+      <div class="nav"><button class="btn ghost" type="button" data-act="copy">Copy my answers</button></div><p class="status" id="status" role="status"></p>
+      <div class="foot"><button type="button" data-act="restart">Start a new set of answers</button></div>`;
+    return;
+  }
+  const steps = visibleSteps();
+  let i = steps.findIndex(s => s.id === st.step);
+  if (i < 0) { i = 0; st.step = steps[0].id; }
+  const s = steps[i];
+  let body;
+  if (s.id === "review") {
+    body = `<h1>Review and send</h1><p class="intro">Here is everything you've entered. Go back to change anything, then send it to IJGB.</p>
+      <div class="summary" tabindex="0" aria-label="Your answers">${esc(summaryText())}</div>
+      <div class="nav"><button class="btn ghost" type="button" data-act="back">Back</button><button class="btn primary" type="button" data-act="submit">Send to IJGB</button><button class="btn ghost" type="button" data-act="copy">Copy my answers</button></div>
+      <p class="status" id="status" role="status"></p>`;
+  } else {
+    body = `<h1>${esc(s.title)}</h1>${s.intro ? `<p class="intro">${esc(s.intro)}</p>` : ""}${s.note ? `<p class="intro muted">${esc(s.note)}</p>` : ""}
+      <form id="stepform" novalidate>${visibleQs(s).map(field).join("")}
+      <p class="err" id="err" role="alert"></p>
+      <div class="nav">${i > 0 ? '<button class="btn ghost" type="button" data-act="back">Back</button>' : ""}<button class="btn primary" type="submit">Next</button></div></form>`;
+  }
+  app.innerHTML = progress(steps, i) + body +
+    `<div class="foot"><span>Questions? Ask your IJGB contact.</span><button type="button" data-act="restart">Clear my answers</button></div>`;
+}
+
+// ---- events ----
+function readInput(el) {
+  const q = STEPS.flatMap(s => s.qs || []).find(q => q.id === el.name);
+  if (!q) return;
+  if (q.type === "multi") st.a[q.id] = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(x => x.value);
+  else if (q.type === "choice") st.a[q.id] = el.value;
+  else st.a[q.id] = el.value.trim();
+}
+
+function missing() {
+  const s = visibleSteps().find(s => s.id === st.step);
+  return visibleQs(s).filter(q => q.req && !display(q)).map(q => q.label);
+}
+
+function go(delta) {
+  const steps = visibleSteps();
+  const i = steps.findIndex(s => s.id === st.step);
+  st.step = steps[Math.max(0, Math.min(steps.length - 1, i + delta))].id;
+  save(); render();
+  const h = document.querySelector("h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
+  window.scrollTo(0, 0);
+}
+
+async function copyAnswers() {
+  const text = summaryText(), status = document.getElementById("status");
+  try { await navigator.clipboard.writeText(text); status.textContent = "Copied. Paste it into an email to your IJGB contact."; status.className = "status ok"; }
+  catch (e) {
+    const box = document.querySelector(".summary") || Object.assign(document.createElement("div"), { className: "summary", textContent: text });
+    if (!box.isConnected) status.after(box);
+    const range = document.createRange(); range.selectNodeContents(box);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    status.textContent = "Your answers are selected: copy them with Ctrl+C (Cmd+C on a Mac)."; status.className = "status";
+  }
+}
+
+async function submit() {
+  const btn = document.querySelector('[data-act="submit"]'), status = document.getElementById("status");
+  if (!SHEET_URL) { status.textContent = "Sending isn't set up yet. Please use \"Copy my answers\" and email them to your IJGB contact."; return; }
+  btn.disabled = true; btn.textContent = "Sending...";
+  try {
+    await fetch(SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(record()) });
+    st.submitted = true; save(); render(); window.scrollTo(0, 0);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Send to IJGB";
+    status.textContent = "Sending failed. Check your connection and try again, or use \"Copy my answers\" and email them.";
+  }
+}
+
+document.addEventListener("input", e => { if (e.target.name) { readInput(e.target); save(); } });
+document.addEventListener("change", e => {
+  if (!e.target.name) return;
+  readInput(e.target); save();
+  if (e.target.type === "radio" || e.target.type === "checkbox") {
+    const id = e.target.id; render();          // show or hide the questions that depend on it
+    const back = document.getElementById(id); if (back) back.focus();
+  }
+});
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  const need = missing();
+  if (need.length) { document.getElementById("err").textContent = "Please answer: " + need.join(", ") + "."; return; }
+  go(1);
+});
+let confirmClear = false;
+document.addEventListener("click", e => {
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (!act) return;
+  if (act === "back") go(-1);
+  if (act === "submit") submit();
+  if (act === "copy") copyAnswers();
+  if (act === "restart") {
+    if (!confirmClear) { confirmClear = true; e.target.textContent = "Click again to clear all answers"; return; }
+    st = { step: "about", a: {}, submitted: false }; confirmClear = false; save(); render();
+  }
+});
+
+load(); render();
+</script>
+</body>
+</html>
