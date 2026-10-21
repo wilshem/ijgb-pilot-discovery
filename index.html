@@ -219,6 +219,7 @@ const STEPS = [
       { id: "security_review", type: "choice", label: "Do you need a security review or vendor questionnaire completed first?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "security_review_detail", type: "textarea", label: "What does it involve?", show: a => a.security_review === "yes" },
       { id: "regulated", type: "multi", label: "Might the mailboxes contain any of these?", options: [["health", "Health information"], ["student", "Student records"], ["card", "Payment card details"], ["personnel", "Personnel files"], ["none", "None of these"], NOT_SURE] },
+      { id: "staff_policy", type: "choice", label: "Do your staff sign a technology or acceptable-use policy saying their work email may be reviewed?", hint: "Some states require written notice to staff before their work email is monitored. If not, we'll help you plan it before the pilot.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "log_viewers", type: "text", label: "Who on your side should be able to see the activity log?", hint: "Every search is logged with who ran it." },
       { id: "retention", type: "text", label: "How long should we keep the email copy, logs and backups?", hint: "Leave blank to discuss." },
       { id: "end_of_pilot", type: "choice", label: "If you don't continue after the pilot, what should happen to your data?", options: [["delete", "Delete it, with confirmation"], ["handover", "Hand it over to us, then delete it"], ["later", "Decide later"]] },
