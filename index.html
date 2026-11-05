@@ -39,7 +39,7 @@ h1{font-size:30px;line-height:1.15;margin:0 0 12px;font-weight:700;letter-spacin
 .opt:has(input:checked){border-color:var(--navy);background:var(--mist)}
 .opt:has(input:focus-visible){outline:3px solid var(--navy);outline-offset:2px}
 .opt .sub{display:block;font-size:14px;color:var(--muted);margin-top:2px}
-input[type=text],input[type=email],input[type=tel],input[type=date],textarea{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
 textarea{min-height:96px;resize:vertical}
 input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
 .nav{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
@@ -68,7 +68,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 // ---- setup ----
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxEEbYBqoKwdWX9FUd5-R_zhf0I-DDJaA-ndThE-fd8xp5GagkFlgMFi34ecQ0lFZQ/exec";                    // The Google Apps Script web app URL (README, step 4)
 const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
-const FORM_VERSION = "2026-10-20";
+const FORM_VERSION = "2026-11-05"; // Change it whenever the questions change (README); the tests check.
 
 // ?client=<tag> on the link labels every answer with the client it was sent to.
 const CLIENT = (() => {
@@ -78,19 +78,114 @@ const CLIENT = (() => {
   } catch (e) { return ""; }
 })();
 const STORE_KEY = "ijgb-discovery:" + (CLIENT || "general");
+// Anywhere but the live site (a preview link, or a copy on your own computer), Send shows what would be
+// sent and sends nothing.
+const PREVIEW = (() => { try { return location.hostname !== "wilshem.github.io"; } catch (e) { return true; } })();
 
 // ---- questions ----
 // type: text | email | tel | date | textarea | choice (one) | multi (any). show(a) hides a question
 // or a whole step until an earlier answer makes it relevant.
 const has = (a, k, v) => Array.isArray(a[k]) && a[k].includes(v);
 const isMs = a => a.mail_system === "microsoft365";
-const isGoogle = a => a.mail_system === "google";
-const usesRecords = a => has(a, "services", "records") || has(a, "services", "binders") || has(a, "services", "final");
+const isGoogle = a => a.mail_system === "google_workspace";
+const wants = (a, suite) => has(a, "suites", suite);
+const usesRecords = a => wants(a, "memory") && ["records", "binders", "final"].some(v => has(a, "memory_services", v));
+const anySuite = a => ["memory", "continuity", "clarity"].some(v => wants(a, v));
 const NOT_SURE = ["not_sure", "Not sure"];
-
+// Time zones are stored as the platform needs them: an IANA area and place, such as America/New_York.
+const ZONES = [["America/New_York", "Eastern"], ["America/Chicago", "Central"], ["America/Denver", "Mountain"],
+  ["America/Phoenix", "Arizona"], ["America/Los_Angeles", "Pacific"], ["America/Anchorage", "Alaska"],
+  ["Pacific/Honolulu", "Hawaii"], ["America/Puerto_Rico", "Atlantic (Puerto Rico)"]];
+// Every other time zone offered: the IANA zones themselves (no old aliases such as Asia/Calcutta, which some
+// systems' time-zone data no longer has), from tzdata 2026e, and Etc/UTC for UTC. The browser's own list
+// is not used: browsers still offer old aliases.
+const ZONE_NAMES = [
+  "Africa/Abidjan", "Africa/Accra", "Africa/Addis_Ababa", "Africa/Algiers", "Africa/Asmara", "Africa/Bamako",
+  "Africa/Bangui", "Africa/Banjul", "Africa/Bissau", "Africa/Blantyre", "Africa/Brazzaville", "Africa/Bujumbura",
+  "Africa/Cairo", "Africa/Casablanca", "Africa/Ceuta", "Africa/Conakry", "Africa/Dakar", "Africa/Dar_es_Salaam",
+  "Africa/Djibouti", "Africa/Douala", "Africa/El_Aaiun", "Africa/Freetown", "Africa/Gaborone", "Africa/Harare",
+  "Africa/Johannesburg", "Africa/Juba", "Africa/Kampala", "Africa/Khartoum", "Africa/Kigali", "Africa/Kinshasa",
+  "Africa/Lagos", "Africa/Libreville", "Africa/Lome", "Africa/Luanda", "Africa/Lubumbashi", "Africa/Lusaka",
+  "Africa/Malabo", "Africa/Maputo", "Africa/Maseru", "Africa/Mbabane", "Africa/Mogadishu", "Africa/Monrovia",
+  "Africa/Nairobi", "Africa/Ndjamena", "Africa/Niamey", "Africa/Nouakchott", "Africa/Ouagadougou",
+  "Africa/Porto-Novo", "Africa/Sao_Tome", "Africa/Tripoli", "Africa/Tunis", "Africa/Windhoek", "America/Adak",
+  "America/Anchorage", "America/Anguilla", "America/Antigua", "America/Araguaina", "America/Argentina/Buenos_Aires",
+  "America/Argentina/Catamarca", "America/Argentina/Cordoba", "America/Argentina/Jujuy",
+  "America/Argentina/La_Rioja", "America/Argentina/Mendoza", "America/Argentina/Rio_Gallegos",
+  "America/Argentina/Salta", "America/Argentina/San_Juan", "America/Argentina/San_Luis", "America/Argentina/Tucuman",
+  "America/Argentina/Ushuaia", "America/Aruba", "America/Asuncion", "America/Atikokan", "America/Bahia",
+  "America/Bahia_Banderas", "America/Barbados", "America/Belem", "America/Belize", "America/Blanc-Sablon",
+  "America/Boa_Vista", "America/Bogota", "America/Boise", "America/Cambridge_Bay", "America/Campo_Grande",
+  "America/Cancun", "America/Caracas", "America/Cayenne", "America/Cayman", "America/Chicago", "America/Chihuahua",
+  "America/Ciudad_Juarez", "America/Costa_Rica", "America/Creston", "America/Cuiaba", "America/Curacao",
+  "America/Danmarkshavn", "America/Dawson", "America/Dawson_Creek", "America/Denver", "America/Detroit",
+  "America/Dominica", "America/Edmonton", "America/Eirunepe", "America/El_Salvador", "America/Fort_Nelson",
+  "America/Fortaleza", "America/Glace_Bay", "America/Goose_Bay", "America/Grand_Turk", "America/Grenada",
+  "America/Guadeloupe", "America/Guatemala", "America/Guayaquil", "America/Guyana", "America/Halifax",
+  "America/Havana", "America/Hermosillo", "America/Indiana/Indianapolis", "America/Indiana/Knox",
+  "America/Indiana/Marengo", "America/Indiana/Petersburg", "America/Indiana/Tell_City", "America/Indiana/Vevay",
+  "America/Indiana/Vincennes", "America/Indiana/Winamac", "America/Inuvik", "America/Iqaluit", "America/Jamaica",
+  "America/Juneau", "America/Kentucky/Louisville", "America/Kentucky/Monticello", "America/La_Paz", "America/Lima",
+  "America/Los_Angeles", "America/Maceio", "America/Managua", "America/Manaus", "America/Martinique",
+  "America/Matamoros", "America/Mazatlan", "America/Menominee", "America/Merida", "America/Metlakatla",
+  "America/Mexico_City", "America/Miquelon", "America/Moncton", "America/Monterrey", "America/Montevideo",
+  "America/Montserrat", "America/Nassau", "America/New_York", "America/Nome", "America/Noronha",
+  "America/North_Dakota/Beulah", "America/North_Dakota/Center", "America/North_Dakota/New_Salem", "America/Nuuk",
+  "America/Ojinaga", "America/Panama", "America/Paramaribo", "America/Phoenix", "America/Port-au-Prince",
+  "America/Port_of_Spain", "America/Porto_Velho", "America/Puerto_Rico", "America/Punta_Arenas",
+  "America/Rankin_Inlet", "America/Recife", "America/Regina", "America/Resolute", "America/Rio_Branco",
+  "America/Santarem", "America/Santiago", "America/Santo_Domingo", "America/Sao_Paulo", "America/Scoresbysund",
+  "America/Sitka", "America/St_Johns", "America/St_Kitts", "America/St_Lucia", "America/St_Thomas",
+  "America/St_Vincent", "America/Swift_Current", "America/Tegucigalpa", "America/Thule", "America/Tijuana",
+  "America/Toronto", "America/Tortola", "America/Vancouver", "America/Whitehorse", "America/Winnipeg",
+  "America/Yakutat", "Antarctica/Casey", "Antarctica/Davis", "Antarctica/DumontDUrville", "Antarctica/Macquarie",
+  "Antarctica/Mawson", "Antarctica/McMurdo", "Antarctica/Palmer", "Antarctica/Rothera", "Antarctica/Syowa",
+  "Antarctica/Troll", "Antarctica/Vostok", "Asia/Aden", "Asia/Almaty", "Asia/Amman", "Asia/Anadyr", "Asia/Aqtau",
+  "Asia/Aqtobe", "Asia/Ashgabat", "Asia/Atyrau", "Asia/Baghdad", "Asia/Bahrain", "Asia/Baku", "Asia/Bangkok",
+  "Asia/Barnaul", "Asia/Beirut", "Asia/Bishkek", "Asia/Brunei", "Asia/Chita", "Asia/Colombo", "Asia/Damascus",
+  "Asia/Dhaka", "Asia/Dili", "Asia/Dubai", "Asia/Dushanbe", "Asia/Famagusta", "Asia/Gaza", "Asia/Hebron",
+  "Asia/Ho_Chi_Minh", "Asia/Hong_Kong", "Asia/Hovd", "Asia/Irkutsk", "Asia/Jakarta", "Asia/Jayapura",
+  "Asia/Jerusalem", "Asia/Kabul", "Asia/Kamchatka", "Asia/Karachi", "Asia/Kathmandu", "Asia/Khandyga",
+  "Asia/Kolkata", "Asia/Krasnoyarsk", "Asia/Kuala_Lumpur", "Asia/Kuching", "Asia/Kuwait", "Asia/Macau",
+  "Asia/Magadan", "Asia/Makassar", "Asia/Manila", "Asia/Muscat", "Asia/Nicosia", "Asia/Novokuznetsk",
+  "Asia/Novosibirsk", "Asia/Omsk", "Asia/Oral", "Asia/Phnom_Penh", "Asia/Pontianak", "Asia/Pyongyang", "Asia/Qatar",
+  "Asia/Qostanay", "Asia/Qyzylorda", "Asia/Riyadh", "Asia/Sakhalin", "Asia/Samarkand", "Asia/Seoul", "Asia/Shanghai",
+  "Asia/Singapore", "Asia/Srednekolymsk", "Asia/Taipei", "Asia/Tashkent", "Asia/Tbilisi", "Asia/Tehran",
+  "Asia/Thimphu", "Asia/Tokyo", "Asia/Tomsk", "Asia/Ulaanbaatar", "Asia/Urumqi", "Asia/Ust-Nera", "Asia/Vientiane",
+  "Asia/Vladivostok", "Asia/Yakutsk", "Asia/Yangon", "Asia/Yekaterinburg", "Asia/Yerevan", "Atlantic/Azores",
+  "Atlantic/Bermuda", "Atlantic/Canary", "Atlantic/Cape_Verde", "Atlantic/Faroe", "Atlantic/Madeira",
+  "Atlantic/Reykjavik", "Atlantic/South_Georgia", "Atlantic/St_Helena", "Atlantic/Stanley", "Australia/Adelaide",
+  "Australia/Brisbane", "Australia/Broken_Hill", "Australia/Darwin", "Australia/Eucla", "Australia/Hobart",
+  "Australia/Lindeman", "Australia/Lord_Howe", "Australia/Melbourne", "Australia/Perth", "Australia/Sydney",
+  "Europe/Amsterdam", "Europe/Andorra", "Europe/Astrakhan", "Europe/Athens", "Europe/Belgrade", "Europe/Berlin",
+  "Europe/Brussels", "Europe/Bucharest", "Europe/Budapest", "Europe/Chisinau", "Europe/Copenhagen", "Europe/Dublin",
+  "Europe/Gibraltar", "Europe/Guernsey", "Europe/Helsinki", "Europe/Isle_of_Man", "Europe/Istanbul", "Europe/Jersey",
+  "Europe/Kaliningrad", "Europe/Kirov", "Europe/Kyiv", "Europe/Lisbon", "Europe/Ljubljana", "Europe/London",
+  "Europe/Luxembourg", "Europe/Madrid", "Europe/Malta", "Europe/Minsk", "Europe/Monaco", "Europe/Moscow",
+  "Europe/Oslo", "Europe/Paris", "Europe/Prague", "Europe/Riga", "Europe/Rome", "Europe/Samara", "Europe/Sarajevo",
+  "Europe/Saratov", "Europe/Simferopol", "Europe/Skopje", "Europe/Sofia", "Europe/Stockholm", "Europe/Tallinn",
+  "Europe/Tirane", "Europe/Ulyanovsk", "Europe/Vaduz", "Europe/Vienna", "Europe/Vilnius", "Europe/Volgograd",
+  "Europe/Warsaw", "Europe/Zagreb", "Europe/Zurich", "Indian/Antananarivo", "Indian/Chagos", "Indian/Christmas",
+  "Indian/Cocos", "Indian/Comoro", "Indian/Kerguelen", "Indian/Mahe", "Indian/Maldives", "Indian/Mauritius",
+  "Indian/Mayotte", "Indian/Reunion", "Pacific/Apia", "Pacific/Auckland", "Pacific/Bougainville", "Pacific/Chatham",
+  "Pacific/Chuuk", "Pacific/Easter", "Pacific/Efate", "Pacific/Fakaofo", "Pacific/Fiji", "Pacific/Funafuti",
+  "Pacific/Galapagos", "Pacific/Gambier", "Pacific/Guadalcanal", "Pacific/Guam", "Pacific/Honolulu",
+  "Pacific/Kanton", "Pacific/Kiritimati", "Pacific/Kosrae", "Pacific/Kwajalein", "Pacific/Majuro",
+  "Pacific/Marquesas", "Pacific/Midway", "Pacific/Nauru", "Pacific/Niue", "Pacific/Norfolk", "Pacific/Noumea",
+  "Pacific/Pago_Pago", "Pacific/Palau", "Pacific/Pitcairn", "Pacific/Pohnpei", "Pacific/Port_Moresby",
+  "Pacific/Rarotonga", "Pacific/Saipan", "Pacific/Tahiti", "Pacific/Tarawa", "Pacific/Tongatapu", "Pacific/Wake",
+  "Pacific/Wallis", "Etc/UTC"
+];
+function otherZones() {
+  const shortlist = ZONES.map(z => z[0]);
+  return ZONE_NAMES.filter(z => !shortlist.includes(z))
+    .map(z => [z, z === "Etc/UTC" ? "UTC (Etc/UTC)" : z.replace(/_/g, " ").replace(/\//g, " / ")]);
+}
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+  "November", "December"].map(m => [m, m]);
 const STEPS = [
   { id: "about", title: "About you",
-    intro: "These questions help us plan a pilot of the IJGB platform around your organization's records. Most take a click. If you don't know an answer, choose \"Not sure\" or leave it blank: we'll go through it together.",
+    intro: "These questions help us plan a pilot around your organization's records. Most take a click. If you don't know an answer, choose \"Not sure\" or leave it blank: we'll go through it together.",
     note: "Your progress is saved in this browser, so you can stop and come back on the same device.",
     qs: [
       { id: "org_name", type: "text", label: "Organization's legal name", hint: "As it should appear on reports.", req: true },
@@ -101,53 +196,37 @@ const STEPS = [
     ] },
   { id: "org", title: "Your organization",
     qs: [
-      { id: "org_type", type: "choice", label: "What kind of organization is it?", options: [["nonprofit", "Non-profit"], ["business", "Private business"], ["other", "Something else"]] },
-      { id: "email_domains", type: "text", label: "Email domain(s) your staff use", hint: "For example example.org. Include any others staff send from." },
-      { id: "timezone", type: "choice", label: "Time zone for dates and times", options: [["America/New_York", "Eastern"], ["America/Chicago", "Central"], ["America/Denver", "Mountain"], ["America/Phoenix", "Arizona"], ["America/Los_Angeles", "Pacific"], ["America/Anchorage", "Alaska"], ["Pacific/Honolulu", "Hawaii"], ["other", "Other"]] },
+      { id: "org_type", type: "choice", store: "value", label: "What kind of organization is it?", options: [["nonprofit", "Non-profit"], ["business", "Private business"], ["public", "Public body or government agency"], ["to confirm at onboarding", "Something else", "We'll confirm it with you at onboarding."]] },
+      { id: "email_domains", type: "text", label: "Email domains your staff send from", hint: "For example example.org, and any others, such as an old domain or a sister organization. We'll ask you to confirm in writing that each one is yours." },
+      { id: "timezone", type: "choice", store: "value", req: true, label: "Your time zone", hint: "Every date and time in your reports is shown in this zone.", options: ZONES.concat([["other", "Another time zone"]]) },
+      { id: "timezone_other", type: "select", store: "value", req: true, label: "Which time zone?", show: a => a.timezone === "other", options: otherZones },
       { id: "records_contact", type: "text", label: "Who should reports name as the contact for records?", hint: "An office or a person, for example \"the finance office\"." },
-      { id: "prompt", type: "multi", label: "What prompted you to look at this now?", options: [["records_request", "A records request we need to answer"], ["legal", "A legal matter, dispute or audit"], ["leadership", "A leadership change"], ["agreements", "We've lost track of our agreements"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"], ["departure", "Someone who holds key relationships is leaving"], ["other", "Something else"]] },
+      { id: "prompt", type: "multi", label: "What prompted you to look at this now?", options: [["records_request", "A records request we need to answer"], ["legal", "A legal matter, dispute or audit"], ["leadership", "A leadership change"], ["agreements", "We've lost track of our agreements"], ["grants", "Grant compliance"], ["departure", "Someone with outside relationships is leaving"], ["other", "Something else"]] },
       { id: "prompt_other", type: "textarea", label: "Tell us more", show: a => has(a, "prompt", "other") },
       { id: "success", type: "textarea", label: "At the end of the pilot, what result would make it a success for you?" },
       { id: "pilot_start", type: "date", label: "When would you like the pilot to start?" },
       { id: "first_deadline", type: "date", label: "Is there a deadline we should know about?", hint: "For example, a response date for a request. Leave blank if none." },
     ] },
-  { id: "services", title: "What you'd like help with",
-    qs: [
-      { id: "services", type: "multi", label: "Which of these would you like to use? Choose all that apply.", options: [
-        ["records", "Searching email", "Find every email and attachment on a topic across chosen mailboxes and dates."],
-        ["binders", "Review binders", "One organized PDF per request for staff or counsel to review, with a decision log."],
-        ["final", "Copies to release", "A clean copy for the requester, with duplicates and junk mail removed and every removal listed."],
-        ["contracts", "Contract review", "Find your agreements, build a register, list what's missing, and a calendar of deadlines."],
-        ["readiness", "Transition readiness", "Prepare for a leadership change, grant audit, or sale: who does what, and which accounts depend on one person."],
-        ["handover", "Relationship handover", "When a salesperson or fundraiser leaves: every outside contact they dealt with, conversations still open, and who is missing from your CRM."],
-        NOT_SURE] },
-      { id: "first_request", type: "textarea", label: "Describe the first search you'd want to run", hint: "Who asked, which mailboxes, what dates, what topic, and when it's due.", show: usesRecords },
-      { id: "request_volume", type: "choice", label: "Roughly how many records requests do you handle a year?", show: usesRecords, options: [["under_5", "Fewer than 5"], ["5_20", "5 to 20"], ["20_50", "20 to 50"], ["over_50", "More than 50"], NOT_SURE] },
-      { id: "request_reach", type: "choice", label: "How far back do requests usually reach?", show: usesRecords, options: [["1y", "About a year"], ["3y", "About 3 years"], ["5y", "About 5 years"], ["7y", "7 years or more"], NOT_SURE] },
-    ] },
   { id: "mail", title: "Your email system",
     intro: "Some of these are easiest for whoever manages your email accounts to answer. It's fine to forward the link to them.",
     qs: [
-      { id: "mail_system", type: "choice", label: "Which email system does your organization use?", req: true, options: [["microsoft365", "Microsoft 365", "Outlook with an Exchange Online account"], ["google", "Google Workspace", "Gmail on your own domain"], ["other", "Something else"], NOT_SURE] },
+      { id: "mail_system", type: "choice", store: "value", label: "Which email system does your organization use?", req: true, options: [["microsoft365", "Microsoft 365", "Outlook with an Exchange Online account"], ["google_workspace", "Google Workspace", "Gmail on your own domain"], ["other", "Something else"], NOT_SURE] },
       { id: "admin_who", type: "choice", label: "Who manages your email accounts?", options: [["inhouse", "Someone on our staff"], ["provider", "An outside IT provider"], NOT_SURE] },
       { id: "admin_contact", type: "text", label: "Their name and email", hint: "So we can send them the setup steps." },
-      { id: "ms_licence", type: "multi", label: "Which Microsoft 365 plan(s) do you have?", hint: "Your administrator can see this under Billing in the Microsoft 365 admin center.", show: isMs, options: [["basic", "Business Basic"], ["standard", "Business Standard"], ["premium", "Business Premium"], ["e3", "E3 (or Office 365 E3)"], ["e5", "E5"], NOT_SURE] },
-      { id: "ms_setup", type: "choice", label: "Could your administrator give the platform read-only access to chosen mailboxes?", hint: "It takes about 30 minutes: register an app with our certificate, put the mailboxes you choose in one group, and give the app read-only access to that group only. We provide step-by-step instructions. You can remove the access at any time.", show: isMs, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
-      { id: "ms_archive", type: "choice", label: "Do any mailboxes have an online archive (\"In-Place Archive\") with mail in it?", hint: "Your administrator can check in the Exchange admin center: Recipients, Mailboxes, select a mailbox, then Others, Archive mailbox.", show: isMs, options: [["yes", "Yes, and it holds mail"], ["on_unknown", "It's turned on, not sure if it's used"], ["no", "No"], NOT_SURE] },
+      { id: "ms_setup", type: "choice", label: "Could your administrator give read-only access to chosen mailboxes?", hint: "It takes about 30 minutes: register an app with our certificate, put the mailboxes you choose in one group, and give the app read-only access to that group only. We provide step-by-step instructions. You can remove the access at any time.", show: isMs, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
+      { id: "ms_archive", type: "choice", label: "Do any mailboxes have an online archive (\"In-Place Archive\") with mail in it?", hint: "Your administrator can check in the Exchange admin center: Recipients, Mailboxes, select a mailbox, then Others, Archive mailbox.", show: isMs, options: [["yes", "Yes, and it holds mail"], ["no", "No"], NOT_SURE] },
+      { id: "ms_outlook", type: "choice", label: "Which Outlook do your staff use?", show: isMs, options: [["classic", "Classic Outlook for Windows", "Has File, Open & Export"], ["new", "New Outlook for Windows"], ["web_mac", "Outlook on the web, or Outlook for Mac"], NOT_SURE] },
       { id: "ms_retention", type: "choice", label: "Does a policy move or delete older mail automatically?", show: isMs, options: [["none", "No"], ["1y", "Yes, after about a year"], ["2y", "Yes, after about two years"], ["other", "Yes, on another schedule"], NOT_SURE] },
       { id: "ms_hold", type: "choice", label: "Is any mailbox under a legal hold?", show: isMs, options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
-      { id: "ms_outlook", type: "choice", label: "Which Outlook do your staff use?", show: isMs, options: [["classic", "Classic Outlook for Windows", "Has File, Open & Export"], ["new", "New Outlook for Windows"], ["web_mac", "Outlook on the web, or Outlook for Mac"], NOT_SURE] },
-      { id: "g_edition", type: "choice", label: "Which Google Workspace edition do you have?", show: isGoogle, options: [["starter", "Business Starter"], ["standard", "Business Standard"], ["plus", "Business Plus"], ["enterprise", "Enterprise"], ["nonprofit_edu", "Nonprofits or Education"], NOT_SURE] },
-      { id: "g_delegation", type: "choice", label: "Could a Google Workspace super administrator approve read-only access?", hint: "One step in the Google Admin console, with no password or key shared. Google's setting covers all mailboxes, so the platform itself limits reading to the mailboxes you list and logs each one. You can remove it in one step.", show: isGoogle, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
+      { id: "g_delegation", type: "choice", label: "Could a Google Workspace super administrator approve read-only access?", hint: "One step in the Google Admin console, with no password or key shared. Google's setting covers all mailboxes, so our system limits reading to the mailboxes you list and logs each one. You can remove it in one step.", show: isGoogle, options: [["yes", "Yes"], ["with_help", "Yes, with guidance"], ["no", "No"], NOT_SURE] },
       { id: "other_system", type: "text", label: "Which system or provider is it?", show: a => a.mail_system === "other" },
       { id: "other_export", type: "multi", label: "Can you export mail from it in any of these formats?", show: a => a.mail_system === "other" || a.mail_system === "not_sure", options: [["mbox", "MBOX"], ["pst", "PST (Outlook data file)"], ["eml", "EML files"], NOT_SURE] },
     ] },
   { id: "mailboxes", title: "Mailboxes",
     intro: "Only the mailboxes you list here are ever read.",
     qs: [
-      { id: "mailboxes", type: "textarea", label: "Which mailboxes should be searchable?", hint: "One email address per line, with the person's role if helpful." },
-      { id: "shared_mailboxes", type: "textarea", label: "Shared mailboxes or group inboxes that hold records", hint: "For example info@ or finance@. Leave blank if none." },
-      { id: "sensitive", type: "choice", label: "Should any of these be limited to certain people?", hint: "For example a former director's, HR's, or legal counsel's mailbox.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "mailboxes", type: "textarea", label: "Which mailboxes should be searchable?", hint: "One email address per line, with the person's role if helpful. Include shared mailboxes that hold records, such as info@ or finance@." },
+      { id: "sensitive", type: "choice", label: "Should any of these be limited to certain people?", hint: "For example a former director's, HR's, or legal counsel's mailbox. We'll ask for your written approval for each one at onboarding.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "sensitive_list", type: "textarea", label: "Which mailboxes, and who may search them?", show: a => a.sensitive === "yes" },
       { id: "departed", type: "multi", label: "What happens to a mailbox when someone leaves?", options: [["active", "It stays active"], ["shared", "It becomes a shared mailbox"], ["deleted", "It's deleted"], ["varies", "It varies"], NOT_SURE] },
       { id: "archive_start", type: "choice", label: "How far back should we copy email?", hint: "Further back takes longer the first time.", options: [["3y", "3 years"], ["5y", "5 years"], ["7y", "7 years"], ["10y", "10 years"], ["all", "Everything available"], NOT_SURE] },
@@ -161,60 +240,100 @@ const STEPS = [
     ] },
   { id: "hosting", title: "Where it runs and who uses it",
     qs: [
-      { id: "hosting", type: "choice", label: "Where would you prefer your copy of the email to live?", options: [
-        ["hosted", "Hosted by IJGB", "A dedicated cloud account for your organization alone, encrypted, shared with no other client."],
-        ["onsite", "On a device at your office", "Your email copy stays on a computer you control."],
+      { id: "hosting", type: "choice", store: "value", label: "Where would you prefer your copy of the email to live?", options: [
+        ["s3", "Hosted by IJGB", "A dedicated cloud account for your organization alone, encrypted, shared with no other client."],
+        ["local", "On a device at your office", "Your email copy stays on a computer you control."],
         ["not_sure", "Not sure: help us decide"]] },
-      { id: "budget", type: "choice", label: "What monthly budget fits for hosting?", hint: "Hosting cost depends mostly on how much email you keep.", show: a => a.hosting !== "onsite", options: [["under_100", "Under $100"], ["100_250", "$100 to $250"], ["250_600", "$250 to $600"], ["over_600", "More than $600"], NOT_SURE] },
-      { id: "device_encryption", type: "choice", label: "Does the device have full-disk encryption turned on (BitLocker or similar)?", show: a => a.hosting === "onsite", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "budget", type: "choice", label: "What monthly budget fits for hosting?", hint: "Hosting cost depends mostly on how much email you keep.", show: a => a.hosting !== "local", options: [["under_100", "Under $100"], ["100_250", "$100 to $250"], ["250_600", "$250 to $600"], ["over_600", "More than $600"], NOT_SURE] },
+      { id: "device_encryption", type: "choice", label: "Does the device have full-disk encryption turned on (BitLocker, FileVault or similar)?", show: a => a.hosting === "local", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "encryption_checked_by", type: "text", label: "Who checked that it is on?", hint: "Name and role. We confirm it again at setup.", show: a => a.hosting === "local" && a.device_encryption === "yes" },
+      { id: "encryption_checked_on", type: "date", label: "On what date?", show: a => a.hosting === "local" && a.device_encryption === "yes" },
       { id: "residency", type: "choice", label: "Does your data need to stay in a particular place?", options: [["none", "No requirement"], ["us", "It must stay in the United States"], ["other", "Another requirement"], NOT_SURE] },
       { id: "users", type: "textarea", label: "Who will run searches or reviews?", hint: "Names and roles." },
-      { id: "restrict", type: "choice", label: "Should everyone listed be able to search every mailbox?", options: [["all", "Yes"], ["limit", "No, some mailboxes should be limited"], NOT_SURE] },
       { id: "access_approver", type: "text", label: "Who can approve IJGB staff reading your mail for a short support window?", hint: "IJGB staff can't read your mail by default. Access is granted to a named person for a window you approve." },
       { id: "sync_freq", type: "choice", label: "How often should new email be copied?", options: [["hourly", "Every hour (default)"], ["daily", "Once a day"], NOT_SURE] },
     ] },
-  { id: "records", title: "Searching email and releasing records", show: usesRecords,
+  { id: "suites", title: "What you'd like help with",
     qs: [
-      { id: "terms", type: "textarea", label: "Words or phrases you often search for", hint: "Keep phrases together, for example \"grant agreement\"." },
-      { id: "signature_text", type: "textarea", label: "Text in your staff email signatures", hint: "For example your street address and website, so they don't count as matches." },
-      { id: "disclaimers", type: "textarea", label: "Standard disclaimers or footers to ignore", hint: "Leave blank if none." },
-      { id: "recipients", type: "text", label: "Who should receive the search results?" },
-      { id: "reviewers", type: "multi", label: "Who decides what is released?", options: [["staff", "Our staff"], ["counsel", "Outside counsel"], ["board", "Our board or a committee"], ["other", "Someone else"]] },
-      { id: "redaction", type: "choice", label: "How do you redact released records?", options: [["acrobat", "Adobe Acrobat"], ["other_tool", "Another tool"], ["none", "We don't usually redact"], NOT_SURE] },
-      { id: "redaction_tool", type: "text", label: "Which tool?", show: a => a.redaction === "other_tool" },
-      { id: "release_statement", type: "textarea", label: "Wording for the statement on released copies", hint: "For example \"Reviewed and cleared for release by ...\". Leave blank to use ours." },
-      { id: "junk_senders", type: "textarea", label: "Senders whose mail is never relevant", hint: "Newsletters or vendors, for example. We'll confirm before treating them as junk." },
+      { id: "suites", type: "multi", label: "Which would you like? Choose all that apply.", options: [
+        ["memory", "Memory", "Find, review and release email records."],
+        ["continuity", "Continuity", "Summaries of your emails with a contact; handing over relationships when someone leaves; preparing for a leadership change, grant audit or sale."],
+        ["clarity", "Clarity (available soon)", "Find and review your agreements, what's missing, and their deadlines."],
+        NOT_SURE] },
     ] },
-  { id: "contracts", title: "Contract review", show: a => has(a, "services", "contracts"),
+  { id: "memory", title: "Memory: your email records", show: a => wants(a, "memory"),
+    qs: [
+      { id: "memory_services", type: "multi", label: "Which would help?", options: [
+        ["records", "Searching email", "Every email and attachment on a topic across chosen mailboxes and dates."],
+        ["binders", "Review binders", "One organized PDF per request for staff or counsel to review, with a decision log."],
+        ["final", "Copies to release", "A clean copy for the requester, with duplicates and junk mail removed and every removal listed."]] },
+      { id: "first_request", type: "textarea", label: "Describe the first search you'd want to run", hint: "Who asked, which mailboxes, what dates, what topic, and when it's due.", show: usesRecords },
+      { id: "request_reach", type: "choice", label: "How far back do requests usually reach?", show: usesRecords, options: [["1y", "About a year"], ["3y", "About 3 years"], ["5y", "About 5 years"], ["7y", "7 years or more"], NOT_SURE] },
+      { id: "terms", type: "textarea", label: "Words or phrases you often search for", hint: "Keep phrases together, for example \"grant agreement\".", show: usesRecords },
+      { id: "signature_text", type: "textarea", label: "Text in your staff email signatures", hint: "For example your street address and website, so they don't count as matches.", show: usesRecords },
+      { id: "junk_senders", type: "textarea", label: "Senders whose mail is never relevant", hint: "Newsletters or vendors, for example. We'll confirm before treating them as junk.", show: usesRecords },
+      { id: "reviewers", type: "multi", label: "Who decides what is released?", show: usesRecords, options: [["staff", "Our staff"], ["counsel", "Outside counsel"], ["board", "Our board or a committee"], ["other", "Someone else"]] },
+      { id: "request_form", type: "choice", label: "Would staff like to send requests with a form we provide, without logging in?", hint: "If so, we'll ask you to approve in writing who may send them.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+    ] },
+  { id: "continuity", title: "Continuity: people and relationships", show: a => wants(a, "continuity"),
+    qs: [
+      { id: "continuity_services", type: "multi", label: "Which would help?", options: [
+        ["summary", "Summaries of emails with a contact", "Everything with a person or organization, by month, with what was discussed."],
+        ["handover", "Relationship handover", "When someone with outside relationships leaves: every outside contact, conversations still open, and who is missing from your CRM."],
+        ["readiness", "Transition readiness", "Prepare for a leadership change, grant audit, or sale: who does what, and which accounts depend on one person."]] },
+      { id: "summary_contacts", type: "textarea", label: "Whose emails with you should we summarize?", hint: "People or organizations, one per line.", show: a => has(a, "continuity_services", "summary") },
+      { id: "handover_who", type: "text", label: "Whose relationships should we review?", hint: "Their role and work email address, for example \"Development Director, jo@example.org\".", show: a => has(a, "continuity_services", "handover") },
+      { id: "handover_when", type: "date", label: "When is (or was) their last day?", show: a => has(a, "continuity_services", "handover") },
+      { id: "handover_since", type: "date", label: "How far back should we look?", hint: "Usually when they started, or the last two or three years.", show: a => has(a, "continuity_services", "handover") },
+      { id: "handover_contacts", type: "multi", label: "Which outside relationships matter most?", show: a => has(a, "continuity_services", "handover"), options: [["donors", "Donors"], ["funders", "Funders and grantmakers"], ["customers", "Customers or clients"], ["partners", "Partners"], ["vendors", "Vendors"], ["other", "Others"]] },
+      { id: "crm", type: "choice", label: "Which CRM do you use?", show: a => has(a, "continuity_services", "handover"), options: [["salesforce", "Salesforce"], ["hubspot", "HubSpot"], ["gohighlevel", "GoHighLevel"], ["other", "Another CRM"], ["none", "None, or a spreadsheet"], NOT_SURE] },
+      { id: "crm_export", type: "choice", label: "Could you export your contacts (with their email addresses) as a CSV file?", hint: "We compare against the export; we never need a CRM login.", show: a => has(a, "continuity_services", "handover") && a.crm && a.crm !== "none", options: [["yes", "Yes"], ["help", "With some help"], ["no", "No"], NOT_SURE] },
+      { id: "deal_words", type: "textarea", label: "Words your team uses for a deal or gift", hint: "For example quote, proposal, pledge or renewal, so we can spot open conversations.", show: a => has(a, "continuity_services", "handover") },
+      { id: "ignore_senders", type: "textarea", label: "Senders to leave out", hint: "For example newsletters or automated systems.", show: a => has(a, "continuity_services", "handover") },
+      { id: "handover_reviewer", type: "text", label: "Who will review the list before anyone acts on it?", show: a => has(a, "continuity_services", "handover") },
+      { id: "readiness_review", type: "multi", label: "Which review would help most?", show: a => has(a, "continuity_services", "readiness"), options: [["leadership", "A leadership change"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"]] },
+      { id: "org_chart", type: "choice", label: "Do you have an org chart and job descriptions?", show: a => has(a, "continuity_services", "readiness"), options: [["yes", "Yes"], ["partial", "Some"], ["no", "No"]] },
+      { id: "accounts_list", type: "choice", label: "Could you list the online accounts you rely on, and who manages each?", hint: "Never send passwords or account numbers: we only ask where credentials are kept.", show: a => has(a, "continuity_services", "readiness"), options: [["yes", "Yes"], ["partial", "Partly"], ["no", "Not yet"]] },
+      { id: "staff_questionnaire", type: "choice", label: "Would staff answer a short questionnaire about what they do?", show: a => has(a, "continuity_services", "readiness"), options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "chart_of_accounts", type: "choice", label: "Can you share a chart of accounts that marks restricted funds and grants?", show: a => has(a, "continuity_services", "readiness") && a.org_type === "nonprofit", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "event_dates", type: "textarea", label: "Dates your plans depend on", hint: "For example a planned leadership change, a grant's end, or a closing date.", show: a => has(a, "continuity_services", "readiness") },
+      { id: "key_relationships", type: "textarea", label: "Funders, customers or suppliers you couldn't do without", show: a => has(a, "continuity_services", "readiness") },
+      { id: "disclosures", type: "textarea", label: "Does anyone reviewing this have a financial interest we should disclose?", hint: "For example a board member who owns a vendor. Leave blank if none.", show: a => has(a, "continuity_services", "readiness") },
+      { id: "readiness_confirmer", type: "text", label: "Who will confirm the findings before they're shared?", show: a => has(a, "continuity_services", "readiness") },
+      { id: "deal_journey", type: "choice", label: "We're designing a way to show how long deals or gifts take, from first contact to a decision. Would you like to hear more, or take part in a pilot?", options: [["yes", "Yes, tell me more"], ["no", "Not now"]] },
+    ] },
+  { id: "deal_journey", title: "How long deals take", show: a => wants(a, "continuity") && a.deal_journey === "yes",
+    intro: "This is still being designed, and nothing here is built yet. Your answers help us shape a pilot that fits you.",
+    qs: [
+      { id: "dj_stage_history", type: "choice", label: "Can your CRM export the history of each deal's stages, not only where it stands today?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "dj_deal_types", type: "textarea", label: "Which types of deal or gift would you look at first?" },
+      { id: "dj_volume", type: "choice", label: "Roughly how many close in a year, won or lost?", options: [["under_5", "Fewer than 5"], ["5_20", "5 to 20"], ["20_100", "20 to 100"], ["over_100", "More than 100"], NOT_SURE] },
+      { id: "dj_meetings", type: "textarea", label: "Are meetings written up by email? If so, who sends the write-ups?", hint: "Leave blank if not." },
+      { id: "dj_folder_listing", type: "choice", label: "Could you export a list of the files in your client folders, with names and dates only?", hint: "No file would be opened or read.", options: [["yes", "Yes"], ["help", "With some help"], ["no", "No"], NOT_SURE] },
+      { id: "dj_hr_folders", type: "text", label: "Which folders hold HR or staff files, so they are left out?" },
+      { id: "dj_success", type: "textarea", label: "How would you judge whether it helped?" },
+    ] },
+  { id: "clarity", title: "Clarity: your agreements", show: a => wants(a, "clarity"),
+    intro: "Available soon. Answering now means it's ready for you when it opens.",
     qs: [
       { id: "agreements_where", type: "multi", label: "Where are your agreements kept?", options: [["shared_drive", "A shared drive or server"], ["sharepoint", "SharePoint or OneDrive"], ["gdrive", "Google Drive"], ["email", "Email attachments"], ["paper", "Paper files"], ["other", "Somewhere else"]] },
       { id: "agreements_other", type: "textarea", label: "Any other places agreements might be?", hint: "For example files a staff member keeps, or county records." },
+      { id: "personnel_sources", type: "textarea", label: "Which of those places hold HR or personnel files?", hint: "They are kept confidential and shown only by their name. Leave blank if none." },
       { id: "former_names", type: "textarea", label: "Other names your organization has used", hint: "Former names, \"Inc.\" or \"LLC\" versions, or trade names." },
       { id: "notice_address", type: "text", label: "Current mailing address for legal notices" },
       { id: "payments_file", type: "choice", label: "Could you export a list of payments (payee, amount, date)?", hint: "Optional. It helps find vendors with no agreement on file.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "scanned", type: "choice", label: "How many of your agreements are scans or photos?", options: [["most", "Most"], ["some", "Some"], ["few", "Few or none"], NOT_SURE] },
       { id: "ai_reader", type: "choice", label: "May we use an AI reading assistant on your agreements?", hint: "Optional, off unless you approve in writing. It sees text with personal details masked, and a person checks everything it suggests.", options: [["yes", "Yes, we'll provide written approval"], ["no", "No"], ["discuss", "We'd like to discuss it"]] },
+      { id: "compare_agreements", type: "textarea", label: "Agreements you'd like compared side by side", hint: "For example two vendors' contracts for the same service. Leave blank if none." },
       { id: "contracts_confirmer", type: "text", label: "Who will confirm the contract register?" },
     ] },
-  { id: "readiness", title: "Transition readiness", show: a => has(a, "services", "readiness"),
+  { id: "reminders", title: "Action-item reminders", show: anySuite,
     qs: [
-      { id: "readiness_review", type: "multi", label: "Which review would help most?", options: [["leadership", "A leadership change"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"]] },
-      { id: "org_chart", type: "choice", label: "Do you have an org chart and job descriptions?", options: [["yes", "Yes"], ["partial", "Some"], ["no", "No"]] },
-      { id: "accounts_list", type: "choice", label: "Could you list the online accounts you rely on, and who manages each?", hint: "Never send passwords or account numbers: we only ask where credentials are kept.", options: [["yes", "Yes"], ["partial", "Partly"], ["no", "Not yet"]] },
-      { id: "staff_questionnaire", type: "choice", label: "Would staff answer a short questionnaire about what they do?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
-      { id: "chart_of_accounts", type: "choice", label: "Can you share a chart of accounts that marks restricted funds and grants?", show: a => a.org_type === "nonprofit", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
-      { id: "readiness_confirmer", type: "text", label: "Who will confirm the findings before they're shared?" },
-    ] },
-  { id: "handover", title: "Relationship handover", show: a => has(a, "services", "handover"),
-    qs: [
-      { id: "handover_who", type: "text", label: "Whose relationships should we review?", hint: "Their role and work email address, for example \"Development Director, jo@example.org\"." },
-      { id: "handover_when", type: "date", label: "When is (or was) their last day?" },
-      { id: "handover_since", type: "date", label: "How far back should we look?", hint: "Usually when they started, or the last two or three years." },
-      { id: "handover_contacts", type: "multi", label: "Which outside relationships matter most?", options: [["donors", "Donors"], ["funders", "Funders and grantmakers"], ["customers", "Customers or clients"], ["partners", "Partners"], ["vendors", "Vendors"], ["other", "Others"]] },
-      { id: "crm", type: "choice", label: "Which CRM do you use?", options: [["salesforce", "Salesforce"], ["hubspot", "HubSpot"], ["gohighlevel", "GoHighLevel"], ["other", "Another CRM"], ["none", "None, or a spreadsheet"], NOT_SURE] },
-      { id: "crm_export", type: "choice", label: "Could you export your contacts (with their email addresses) as a CSV file?", hint: "We compare against the export; we never need a CRM login.", show: a => a.crm && a.crm !== "none", options: [["yes", "Yes"], ["help", "With some help"], ["no", "No"], NOT_SURE] },
-      { id: "other_domains", type: "text", label: "Other email domains your own staff use", hint: "So colleagues are not counted as outside contacts, for example an old domain or a sister organization." },
-      { id: "handover_reviewer", type: "text", label: "Who will review the list before anyone acts on it?" },
+      { id: "reminders", type: "choice", label: "Would you like email reminders of deadlines and open items from your reports?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "reminder_kinds", type: "multi", label: "Which kinds?", show: a => a.reminders === "yes", options: [["deadline", "Deadlines in agreements"], ["ending", "Agreements ending"], ["decision", "Decisions waiting"], ["waiting", "Someone waiting on a reply"]] },
+      { id: "reminder_every", type: "choice", label: "How often?", show: a => a.reminders === "yes", options: [["daily", "Daily"], ["weekly", "Weekly"], ["every_two_weeks", "Every two weeks"], ["monthly", "Monthly"], ["quarterly", "Quarterly"]] },
+      { id: "fiscal_year_start", type: "choice", label: "When does your fiscal year start?", show: a => a.reminders === "yes", options: MONTHS },
+      { id: "reminder_recipients", type: "textarea", label: "Who should receive them?", hint: "Names and email addresses. We'll ask you to approve the list in writing; reminders go to no one else.", show: a => a.reminders === "yes" },
     ] },
   { id: "security", title: "Security and working together",
     qs: [
@@ -222,34 +341,44 @@ const STEPS = [
       { id: "security_review_detail", type: "textarea", label: "What does it involve?", show: a => a.security_review === "yes" },
       { id: "regulated", type: "multi", label: "Might the mailboxes contain any of these?", options: [["health", "Health information"], ["student", "Student records"], ["card", "Payment card details"], ["personnel", "Personnel files"], ["none", "None of these"], NOT_SURE] },
       { id: "staff_policy", type: "choice", label: "Do your staff sign a technology or acceptable-use policy saying their work email may be reviewed?", hint: "Some states require written notice to staff before their work email is monitored. If not, we'll help you plan it before the pilot.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
-      { id: "log_viewers", type: "text", label: "Who on your side should be able to see the activity log?", hint: "Every search is logged with who ran it." },
-      { id: "retention", type: "text", label: "How long should we keep the email copy, logs and backups?", hint: "Leave blank to discuss." },
+      { id: "retention_change", type: "choice", label: "We keep earlier versions of changed or deleted mail for 90 days, backups for 35 days, and the activity log for 365 days. Do you need any of these changed?", options: [["no", "No"], ["yes", "Yes"], NOT_SURE] },
+      { id: "retention_detail", type: "textarea", label: "Which, and to how long?", show: a => a.retention_change === "yes" },
       { id: "end_of_pilot", type: "choice", label: "If you don't continue after the pilot, what should happen to your data?", options: [["delete", "Delete it, with confirmation"], ["handover", "Hand it over to us, then delete it"], ["later", "Decide later"]] },
       { id: "accessibility", type: "choice", label: "Will anyone reading reports use assistive technology, such as a screen reader?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "accessibility_detail", type: "textarea", label: "Tell us what would help", show: a => a.accessibility === "yes" },
-      { id: "support_contact", type: "text", label: "Your main contact for day-to-day questions" },
+      { id: "support_contact", type: "text", label: "Your main contact for day-to-day questions, and who will tell us about staff changes" },
       { id: "incident_contact", type: "text", label: "Who should we call first if we suspect a security problem with your data?", hint: "Someone you trust to make decisions quickly, including outside business hours: name, role and phone." },
-      { id: "reply_time", type: "choice", label: "How quickly do you expect a reply to a support question?", options: [["same_day", "The same business day"], ["1_2_days", "Within 1 to 2 business days"], ["week", "Within a week"]] },
-      { id: "staff_changes", type: "text", label: "Who will tell us about staff changes?", hint: "New mailboxes, departures, or changes to who may search." },
-      { id: "notify", type: "multi", label: "How should we tell you about a problem?", options: [["email", "Email"], ["phone", "Phone call"], ["text", "Text message"]] },
-      { id: "change_windows", type: "textarea", label: "Times when setup work should not happen", hint: "For example month-end, or a board meeting week." },
       { id: "anything_else", type: "textarea", label: "Anything else we should know?" },
     ] },
 ];
 
 // ---- state ----
 let st = { step: "about", a: {}, submitted: false };
-function load() { try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); if (s && s.a) st = Object.assign(st, s); } catch (e) {} }
+const RENAMED = { mail_system: { google: "google_workspace" }, hosting: { hosted: "s3", onsite: "local" },
+  org_type: { other: "to confirm at onboarding" } };
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (s && s.a) st = Object.assign(st, s);
+    for (const [k, m] of Object.entries(RENAMED)) if (st.a[k] in m) st.a[k] = m[st.a[k]];
+  } catch (e) {}
+}
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (e) {} }
 
 const visibleSteps = () => [...STEPS.filter(s => !s.show || s.show(st.a)), { id: "review", title: "Review and send" }];
 const visibleQs = s => (s.qs || []).filter(q => !q.show || q.show(st.a));
-const optLabel = (q, v) => { const o = (q.options || []).find(o => o[0] === v); return o ? o[1] : v; };
+const optCache = new Map();
+const optsOf = q => {
+  if (typeof q.options !== "function") return q.options || [];
+  if (!optCache.has(q.id)) optCache.set(q.id, q.options());
+  return optCache.get(q.id);
+};
+const optLabel = (q, v) => { const o = optsOf(q).find(o => o[0] === v); return o ? o[1] : v; };
 
 function display(q) {
   const v = st.a[q.id];
   if (v === undefined || v === "" || (Array.isArray(v) && !v.length)) return "";
-  if (q.type === "choice") return optLabel(q, v);
+  if (q.type === "choice" || q.type === "select") return optLabel(q, v);
   if (q.type === "multi") return v.map(x => optLabel(q, x)).join("; ");
   return String(v);
 }
@@ -257,7 +386,17 @@ function display(q) {
 // What the sheet receives: one column per question, only questions that apply, plus who and when.
 function record() {
   const r = { code: SUBMIT_CODE, client: CLIENT, form_version: FORM_VERSION, submitted_at: new Date().toISOString() };
-  for (const s of visibleSteps()) for (const q of visibleQs(s)) r[q.id] = display(q);
+  for (const s of visibleSteps()) for (const q of visibleQs(s)) {
+    const v = st.a[q.id];
+    r[q.id] = q.store === "value" && typeof v === "string" ? v : display(q);
+  }
+  // timezone is always an IANA area and place (America/New_York), as the platform requires.
+  if ("timezone" in r) {
+    const z = ZONES.find(z => z[0] === r.timezone);
+    r.timezone_label = z ? z[1] : "";
+    if (r.timezone === "other") r.timezone = r.timezone_other || "";
+    delete r.timezone_other;
+  }
   return r;
 }
 
@@ -288,6 +427,11 @@ function field(q) {
       return `<label class="opt"><input type="${kind}" name="${q.id}" id="${q.id}-${i}" value="${esc(val)}"${on ? " checked" : ""}><span>${esc(label)}${sub ? `<span class="sub">${esc(sub)}</span>` : ""}</span></label>`;
     }).join("");
     return `<fieldset class="q"${desc}><legend>${esc(q.label)}${req}</legend>${hint}<div class="opts">${opts}</div></fieldset>`;
+  }
+  if (q.type === "select") {
+    const opts = [["", "Choose a time zone"]].concat(optsOf(q)).map(([val, label]) =>
+      `<option value="${esc(val)}"${v === val && val ? " selected" : ""}>${esc(label)}</option>`).join("");
+    return `<div class="q"><label class="qt" for="${q.id}">${esc(q.label)}${req}</label>${hint}<select id="${q.id}" name="${q.id}"${desc}${q.req ? " required" : ""}>${opts}</select></div>`;
   }
   const val = v === undefined ? "" : esc(v);
   const input = q.type === "textarea"
@@ -327,7 +471,7 @@ function render() {
       <div class="nav">${i > 0 ? '<button class="btn ghost" type="button" data-act="back">Back</button>' : ""}<button class="btn primary" type="submit">Next</button></div></form>`;
   }
   app.innerHTML = progress(steps, i) + body +
-    `<div class="foot"><span>Questions? Ask your IJGB contact.</span><button type="button" data-act="restart">Clear my answers</button></div>`;
+    `<div class="foot">${PREVIEW ? '<span class="tag">Preview copy: answers are never sent from here.</span>' : ""}<span>Questions? Ask your IJGB contact.</span><button type="button" data-act="restart">Clear my answers</button></div>`;
 }
 
 // ---- events ----
@@ -335,7 +479,7 @@ function readInput(el) {
   const q = STEPS.flatMap(s => s.qs || []).find(q => q.id === el.name);
   if (!q) return;
   if (q.type === "multi") st.a[q.id] = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(x => x.value);
-  else if (q.type === "choice") st.a[q.id] = el.value;
+  else if (q.type === "choice" || q.type === "select") st.a[q.id] = el.value;
   else st.a[q.id] = el.value.trim();
 }
 
@@ -367,6 +511,14 @@ async function copyAnswers() {
 
 async function submit() {
   const btn = document.querySelector('[data-act="submit"]'), status = document.getElementById("status");
+  if (PREVIEW) {
+    status.className = "status";
+    status.textContent = "Preview: nothing was sent. This is the row the live form would send:";
+    const box = document.getElementById("preview-row") || Object.assign(document.createElement("div"), { id: "preview-row", className: "summary", tabIndex: 0 });
+    box.textContent = JSON.stringify(Object.assign(record(), { code: "(hidden)" }), null, 2);
+    if (!box.isConnected) status.after(box);
+    return;
+  }
   if (!SHEET_URL) { status.textContent = "Sending isn't set up yet. Please use \"Copy my answers\" and email them to your IJGB contact."; return; }
   btn.disabled = true; btn.textContent = "Sending...";
   try {

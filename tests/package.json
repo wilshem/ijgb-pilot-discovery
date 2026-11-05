@@ -1,0 +1,11 @@
+{
+  "name": "ijgb-pilot-discovery-tests",
+  "private": true,
+  "description": "Offline tests of the discovery form (index.html) and its sheet receiver (Code.gs).",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "25.0.1"
+  }
+}
