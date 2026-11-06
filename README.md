@@ -90,7 +90,8 @@ for a long list), a `label`, an optional `hint`, `options` for choices, `req: tr
 hides it until earlier answers make it relevant. Keep an `id` the same once clients have answered
 it, so the column carries on.
 
-**When the questions change:** set `FORM_VERSION` to the day's date, add that version's list of
+**When the questions change:** set `FORM_VERSION` to the day's date (a second change on the same
+day is `YYYY-MM-DD.2`, then `.3`), add that version's list of
 question ids to `VERSIONS` in `Code.gs`, run `node update-version.js` in `tests/` to record the new
 fingerprint, run the tests, and redeploy `Code.gs`. The tests fail if the questions change while
 `FORM_VERSION` stays the same, or if `VERSIONS` and the page disagree.

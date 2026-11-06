@@ -68,7 +68,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 // ---- setup ----
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxEEbYBqoKwdWX9FUd5-R_zhf0I-DDJaA-ndThE-fd8xp5GagkFlgMFi34ecQ0lFZQ/exec";                    // The Google Apps Script web app URL (README, step 4)
 const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
-const FORM_VERSION = "2026-11-06"; // Change it whenever the questions change (README); the tests check.
+const FORM_VERSION = "2026-11-06.2"; // Change it whenever the questions change (README); the tests check.
 
 // ?client=<tag> on the link labels every answer with the client it was sent to.
 const CLIENT = (() => {
@@ -186,7 +186,7 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
   "November", "December"].map(m => [m, m]);
 const STEPS = [
   { id: "about", title: "About you",
-    intro: "These questions help us plan a pilot around your organization's records. It takes about 20 to 30 minutes, depending on what you choose, and most questions take a click. If you don't know an answer, choose \"Not sure\" or leave it blank: we'll go through it together.",
+    intro: "These questions help us plan a pilot around your organization's records. It takes about 20 to 30 minutes for most organizations; longer if you add detail or choose every suite. Most questions take a click. If you don't know an answer, choose \"Not sure\" or leave it blank: we'll go through it together.",
     note: "Your progress is saved in this browser, so you can stop and come back on the same device.",
     qs: [
       { id: "org_name", type: "text", label: "Organization's legal name", hint: "As it should appear on reports.", req: true },
@@ -331,7 +331,7 @@ const STEPS = [
     ] },
   { id: "reminders", title: "Action-item reminders", show: anySuite,
     qs: [
-      { id: "reminders", type: "choice", label: "Would you like email reminders of deadlines and open items from your reports?", hint: "Reminders come by email only.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
+      { id: "reminders", type: "choice", label: "Would you like email reminders when someone is still waiting on a reply?", hint: "Reminders are offered with some plans and confirmed at the kickoff call. They come by email only.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "reminder_kinds", type: "multi", label: "Which kinds?", show: a => a.reminders === "yes", options: [["waiting", "Someone waiting on a reply"], ["deadline", "Deadlines in agreements (available soon)"], ["ending", "Agreements ending (available soon)"], ["decision", "Decisions waiting (available soon)"]] },
       { id: "reminder_every", type: "choice", label: "How often?", show: a => a.reminders === "yes", options: [["daily", "Daily"], ["weekly", "Weekly"], ["every_two_weeks", "Every two weeks"], ["monthly", "Monthly"], ["quarterly", "Quarterly"]] },
       { id: "fiscal_year_start", type: "choice", label: "When does your fiscal year start?", show: a => a.reminders === "yes", options: MONTHS },

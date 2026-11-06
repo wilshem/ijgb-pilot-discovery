@@ -185,8 +185,8 @@ test("the action-item reminders section asks its follow-ups only after yes", () 
 test("version rule: these questions are recorded under FORM_VERSION, and no version is reused", () => {
   const p = page();
   const version = p.ev("FORM_VERSION");
-  assert.match(version, /^\d{4}-\d{2}-\d{2}$/);
-  assert.ok(!isNaN(Date.parse(version + "T00:00:00Z")));
+  assert.match(version, /^\d{4}-\d{2}-\d{2}(\.[2-9]|\.[1-9]\d+)?$/);
+  assert.ok(!isNaN(Date.parse(version.slice(0, 10) + "T00:00:00Z")));
   const history = JSON.parse(fs.readFileSync(path.join(__dirname, "form-version.json"), "utf8"));
   const versions = history.map(h => h.version);
   assert.equal(new Set(versions).size, versions.length, "a version is recorded twice");

@@ -14,7 +14,7 @@ const MAX_KEYS = 200;
 // The questions each form version may send. A row from any other version, or with any other key, is
 // refused, so a stray request cannot add columns. Add the new version's list here whenever FORM_VERSION
 // changes in index.html (the tests compare them), and keep the previous one for a while: a client may
-// still have the earlier page open.
+// still have the earlier page open. A second version on one day is written YYYY-MM-DD.2, then .3.
 const VERSIONS = {
   "2026-10-20": [
     "org_name", "contact_name", "contact_role", "contact_email", "contact_phone", "org_type",
@@ -35,7 +35,7 @@ const VERSIONS = {
     "accessibility_detail", "support_contact", "incident_contact", "reply_time", "staff_changes", "notify",
     "change_windows", "anything_else"
   ],
-  "2026-11-06": [
+  "2026-11-06.2": [
     "org_name", "contact_name", "contact_role", "contact_email", "contact_phone", "org_type",
     "email_domains", "timezone", "timezone_label", "records_contact", "prompt", "prompt_other", "success",
     "pilot_start", "first_deadline", "mail_system", "admin_who", "admin_contact", "ms_setup", "ms_archive",

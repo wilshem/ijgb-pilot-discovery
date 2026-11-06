@@ -41,7 +41,7 @@ test("reminders: only waiting on a reply works today; the rest are available soo
 test("signature text, junk senders and senders to leave out are left for the kickoff call", () => {
   const p = page();
   for (const id of ["signature_text", "junk_senders", "ignore_senders"]) assert.equal(p.question(id), undefined, id);
-  assert.match(p.val('STEPS[0].intro'), /about 20 to 30 minutes, depending on what you choose/);
+  assert.match(p.val('STEPS[0].intro'), /about 20 to 30 minutes for most organizations/);
 });
 
 test("the email summary says the written summary uses AI only with written approval", () => {
@@ -86,4 +86,28 @@ test("the version fingerprint covers the shared helpers and each step's note", (
   }
   // A comment or blank line alone does not change it.
   assert.equal(fingerprint(page({ html: html.replace("// ---- questions ----", "// ---- questions ----\n// a note\n") })), base);
+});
+
+test("recheck: reminders are offered with some plans, confirmed at the kickoff call, about waiting replies", () => {
+  const p = page();
+  const q = p.question("reminders");
+  assert.doesNotMatch(q.label, /deadline/i);
+  assert.match(q.label, /repl(y|ies)/i);
+  assert.match(q.hint, /offered with some plans/);
+  assert.match(q.hint, /confirmed at the kickoff call/);
+  assert.match(q.hint, /email only/);
+  const kinds = p.question("reminder_kinds").options;
+  assert.equal(kinds[0][0], "waiting");
+  for (const [v, label] of kinds.slice(1)) assert.match(label, /\(available soon\)$/, v);
+});
+
+test("recheck: the intro gives the time for most organizations", () => {
+  const p = page();
+  assert.match(p.val("STEPS[0].intro"),
+    /about 20 to 30 minutes for most organizations; longer if you add detail or choose every suite\./);
+});
+
+test("a second version on one day is written YYYY-MM-DD.N", () => {
+  const p = page();
+  assert.match(p.ev("FORM_VERSION"), /^\d{4}-\d{2}-\d{2}(\.[2-9]|\.[1-9]\d+)?$/);
 });
