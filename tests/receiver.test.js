@@ -4,8 +4,8 @@ const assert = require("node:assert/strict");
 const { receiver } = require("./harness");
 
 const CODE = "ijgb-discovery-26";
-const good = (extra = {}) => ({ code: CODE, client: "example-foundation", form_version: "2026-11-05",
-  submitted_at: "2026-11-05T15:04:05.123Z", org_name: "Example Community Foundation", contact_name: "Dana Lee",
+const good = (extra = {}) => ({ code: CODE, client: "example-foundation", form_version: "2026-11-06",
+  submitted_at: "2026-11-06T15:04:05.123Z", org_name: "Example Community Foundation", contact_name: "Dana Lee",
   contact_email: "dana@example.org", timezone: "America/New_York", timezone_label: "Eastern", ...extra });
 
 test("a well-formed row is written, with the fixed columns first", () => {
@@ -48,7 +48,7 @@ const bad = {
   "no form version": (() => { const g = good(); delete g.form_version; return g; })(),
   "a key the version does not ask": good({ shoe_size: "9" }),
   "a key from another version": good({ ms_licence: "E3" }),
-  "a key like __proto__": '{"code":"' + CODE + '","form_version":"2026-11-05","__proto__":"x","org_name":"a","contact_name":"b","contact_email":"c@d.org","client":"","submitted_at":"2026-11-05T15:04:05Z"}',
+  "a key like __proto__": '{"code":"' + CODE + '","form_version":"2026-11-06","__proto__":"x","org_name":"a","contact_name":"b","contact_email":"c@d.org","client":"","submitted_at":"2026-11-06T15:04:05Z"}',
   "a number for an answer": good({ users: 3 }),
   "a list for an answer": good({ suites: ["memory"] }),
   "an answer over 5,000 characters": good({ anything_else: "x".repeat(5001) }),
@@ -65,8 +65,8 @@ const bad = {
 };
 // A body over the limit, built from allowed keys and answers under 5,000 characters, so only its size is wrong.
 bad["a body over 100,000 characters"] = (() => {
-  const fill = ["mailboxes", "users", "success", "terms", "signature_text", "junk_senders", "first_request",
-    "summary_contacts", "deal_words", "ignore_senders", "event_dates", "key_relationships", "disclosures",
+  const fill = ["mailboxes", "users", "success", "terms", "prompt_other", "sensitive_list", "first_request",
+    "summary_contacts", "deal_words", "retention_detail", "event_dates", "key_relationships", "disclosures",
     "dj_deal_types", "dj_meetings", "dj_success", "agreements_other", "personnel_sources", "former_names",
     "compare_agreements", "anything_else"];
   return JSON.stringify(good(Object.fromEntries(fill.map(k => [k, "x".repeat(4900)]))));
@@ -76,6 +76,8 @@ test("the oversized body is over the limit only by its size", () => {
   const body = bad["a body over 100,000 characters"];
   assert.ok(body.length > 100000);
   assert.ok(Object.values(JSON.parse(body)).every(v => v.length <= 5000));
+  const allowed = receiver().val('VERSIONS["2026-11-06"]').concat(["code", "client", "form_version", "submitted_at"]);
+  assert.ok(Object.keys(JSON.parse(body)).every(k => allowed.includes(k)), "only allowed keys");
 });
 
 for (const [name, body] of Object.entries(bad)) {
@@ -89,7 +91,7 @@ for (const [name, body] of Object.entries(bad)) {
 
 test("more than 200 keys is refused", () => {
   const r = receiver();
-  const allowed = r.val('VERSIONS["2026-11-05"]');
+  const allowed = r.val('VERSIONS["2026-11-06"]');
   assert.ok(allowed.length < 200, "the limit must stay above the form's own questions");
   const g = good();
   const body = JSON.stringify(Object.assign(g, Object.fromEntries(Array.from({ length: 201 }, (_, i) => [`k${i}`, ""]))));

@@ -5,10 +5,12 @@ IJGB's records service. It is one page (`index.html`) published with GitHub Page
 answers go to a Google Sheet that IJGB owns, through a small Google Apps Script (`Code.gs`).
 
 - **Clients need no account.** They open a link, answer step by step, review, and send.
-- **Questions branch on earlier answers.** Everyone answers a short core (about 13 minutes); each
-  suite chosen (Memory, Continuity, Clarity) adds about 3 minutes, and a client choosing two takes
-  about 20. A Microsoft 365 client never sees the Google questions, and the deal-journey questions
-  appear only for a client who asks about it.
+- **Questions branch on earlier answers.** It takes about 20 to 30 minutes, depending on what the
+  client chooses: everyone answers a core (about 14 minutes at a quick pace), and each suite chosen
+  (Memory, Continuity, Clarity) adds its own section. A Microsoft 365 client never sees the Google
+  questions, and the deal-journey questions appear only for a client who asks about it.
+- **Only what works today is offered as available.** Clarity, transition readiness (it builds on
+  the contract review) and the agreement reminders are marked "available soon".
 - **Approvals are not asked here.** Written approvals (AI use, sensitive mailboxes, domain
   ownership, per-person figures, reminder recipients and details, who may send requests) are
   gathered in the onboarding paperwork, with a named person and a date.

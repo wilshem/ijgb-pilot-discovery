@@ -9,9 +9,9 @@ const LIVE = "https://wilshem.github.io/ijgb-pilot-discovery/";
 
 // The page at a URL (the live site by default). fetch is replaced so nothing leaves the machine;
 // sent holds each request the page made.
-function page({ url = LIVE, answers = null } = {}) {
+function page({ url = LIVE, answers = null, html = HTML } = {}) {
   const sent = [];
-  const dom = new JSDOM(HTML, {
+  const dom = new JSDOM(html, {
     url, runScripts: "dangerously", pretendToBeVisual: true,
     beforeParse(w) {
       w.fetch = async (u, opts) => { sent.push({ url: u, opts }); return { ok: true }; };
@@ -24,7 +24,7 @@ function page({ url = LIVE, answers = null } = {}) {
   // Values from the page, as plain data from this side (jsdom's arrays belong to another realm).
   const val = s => { const t = w.eval(`JSON.stringify(${s})`); return t === undefined ? undefined : JSON.parse(t); };
   return {
-    w, sent, ev, val,
+    w, sent, ev, val, html,
     set(a) { w.eval(`st.a = ${JSON.stringify(a)}; render();`); },
     steps() { return val("visibleSteps().map(s => s.id)"); },
     qs(step) { return val(`visibleQs(STEPS.find(s => s.id === ${JSON.stringify(step)})).map(q => q.id)`); },
@@ -40,15 +40,15 @@ function pageKeys(p) {
   return ids.filter(i => i !== "timezone_other").concat(["timezone_label"]).sort();
 }
 
-// What identifies the questions: their ids, types, words, options and when they show. Any change
-// to these needs a new FORM_VERSION.
+// What identifies the questions: the page's whole question section, from "// ---- questions ----" to
+// "// ---- state ----": the shared helpers that decide what shows (has, wants, usesRecords, anySuite, ...),
+// the time zones and every step with its title, intro, note and questions. Lines that are only comments,
+// and spacing, are left out. Any other change there needs a new FORM_VERSION.
 function fingerprint(p) {
-  const text = p.ev(`JSON.stringify({
-    steps: STEPS.map(s => ({ id: s.id, title: s.title, intro: s.intro || "", show: s.show ? String(s.show) : "",
-      qs: (s.qs || []).map(q => ({ id: q.id, type: q.type, label: q.label, hint: q.hint || "", req: !!q.req,
-        store: q.store || "", show: q.show ? String(q.show) : "",
-        options: typeof q.options === "function" ? String(q.options) : (q.options || []) })) })),
-    zones: ZONES, names: ZONE_NAMES })`);
+  const start = p.html.indexOf("// ---- questions ----"), end = p.html.indexOf("// ---- state ----");
+  if (start < 0 || end < start) throw new Error("index.html lost its question section markers");
+  const text = p.html.slice(start, end).split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("//"))
+    .join("\n").replace(/[ \t]+/g, " ");
   return crypto.createHash("sha256").update(text).digest("hex");
 }
 

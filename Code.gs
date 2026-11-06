@@ -35,7 +35,7 @@ const VERSIONS = {
     "accessibility_detail", "support_contact", "incident_contact", "reply_time", "staff_changes", "notify",
     "change_windows", "anything_else"
   ],
-  "2026-11-05": [
+  "2026-11-06": [
     "org_name", "contact_name", "contact_role", "contact_email", "contact_phone", "org_type",
     "email_domains", "timezone", "timezone_label", "records_contact", "prompt", "prompt_other", "success",
     "pilot_start", "first_deadline", "mail_system", "admin_who", "admin_contact", "ms_setup", "ms_archive",
@@ -44,17 +44,17 @@ const VERSIONS = {
     "languages_which", "mailbox_size", "old_systems", "old_systems_detail", "old_formats", "hosting",
     "budget", "device_encryption", "encryption_checked_by", "encryption_checked_on", "residency", "users",
     "access_approver", "sync_freq", "suites", "memory_services", "first_request", "request_reach", "terms",
-    "signature_text", "junk_senders", "reviewers", "request_form", "continuity_services", "summary_contacts",
-    "handover_who", "handover_when", "handover_since", "handover_contacts", "crm", "crm_export",
-    "deal_words", "ignore_senders", "handover_reviewer", "readiness_review", "org_chart", "accounts_list",
-    "staff_questionnaire", "chart_of_accounts", "event_dates", "key_relationships", "disclosures",
-    "readiness_confirmer", "deal_journey", "dj_stage_history", "dj_deal_types", "dj_volume", "dj_meetings",
-    "dj_folder_listing", "dj_hr_folders", "dj_success", "agreements_where", "agreements_other",
-    "personnel_sources", "former_names", "notice_address", "payments_file", "scanned", "ai_reader",
-    "compare_agreements", "contracts_confirmer", "reminders", "reminder_kinds", "reminder_every",
-    "fiscal_year_start", "reminder_recipients", "security_review", "security_review_detail", "regulated",
-    "staff_policy", "retention_change", "retention_detail", "end_of_pilot", "accessibility",
-    "accessibility_detail", "support_contact", "incident_contact", "anything_else"
+    "reviewers", "request_form", "continuity_services", "summary_contacts", "handover_who", "handover_when",
+    "handover_since", "handover_contacts", "crm", "crm_export", "deal_words", "handover_reviewer",
+    "deal_journey", "readiness_review", "org_chart", "accounts_list", "staff_questionnaire",
+    "chart_of_accounts", "event_dates", "key_relationships", "disclosures", "readiness_confirmer",
+    "dj_stage_history", "dj_deal_types", "dj_volume", "dj_meetings", "dj_folder_listing", "dj_hr_folders",
+    "dj_success", "agreements_where", "agreements_other", "personnel_sources", "former_names",
+    "notice_address", "payments_file", "scanned", "ai_reader", "compare_agreements", "contracts_confirmer",
+    "reminders", "reminder_kinds", "reminder_every", "fiscal_year_start", "reminder_recipients",
+    "security_review", "security_review_detail", "regulated", "staff_policy", "retention_change",
+    "retention_detail", "end_of_pilot", "accessibility", "accessibility_detail", "support_contact",
+    "incident_contact", "anything_else"
   ],
 };
 
