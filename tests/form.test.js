@@ -173,9 +173,9 @@ test("retention states the standard periods and asks only about changes", () => 
   assert.ok(p.qs("security").includes("retention_detail"));
 });
 
-test("the action-item reminders section asks its follow-ups only after yes", () => {
+test("the Deadline and Action Reminders section asks its follow-ups only after yes", () => {
   const p = page();
-  assert.equal(p.ev('STEPS.find(s => s.id === "reminders").title'), "Action-item reminders");
+  assert.equal(p.ev('STEPS.find(s => s.id === "reminders").title'), "Deadline and Action Reminders");
   p.set({ ...CORE, suites: ["clarity"], reminders: "no" });
   assert.deepEqual(p.qs("reminders"), ["reminders"]);
   p.set({ ...CORE, suites: ["clarity"], reminders: "yes" });

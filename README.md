@@ -9,7 +9,7 @@ answers go to a Google Sheet that IJGB owns, through a small Google Apps Script 
   client chooses: everyone answers a core (about 14 minutes at a quick pace), and each suite chosen
   (Memory, Continuity, Clarity) adds its own section. A Microsoft 365 client never sees the Google
   questions, and the deal-journey questions appear only for a client who asks about it.
-- **Only what works today is offered as available.** Clarity, transition readiness (it builds on
+- **Only what works today is offered as available.** Clarity, the Knowledge Transfer Report (it builds on
   the contract review) and the agreement reminders are marked "available soon".
 - **Approvals are not asked here.** Written approvals (AI use, sensitive mailboxes, domain
   ownership, per-person figures, reminder recipients and details, who may send requests) are
