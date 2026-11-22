@@ -8,7 +8,7 @@ const CORE = { org_name: "Example Community Foundation", contact_name: "Dana Lee
   timezone: "America/Chicago", mail_system: "microsoft365" };
 const SOON = /available soon/i;
 
-test("transition readiness is marked available soon, and its questions sit under that label", () => {
+test("the Knowledge Transfer Report is marked available soon, and its questions sit under that label", () => {
   const p = page();
   const suite = p.question("suites").options.find(o => o[0] === "continuity");
   assert.match(suite[2], /leadership change, grant audit or sale \(available soon\)/);
@@ -17,7 +17,7 @@ test("transition readiness is marked available soon, and its questions sit under
   p.set({ ...CORE, suites: ["continuity"], continuity_services: ["readiness"] });
   assert.deepEqual(p.steps().slice(6, 9), ["continuity", "readiness", "reminders"]);
   const step = p.val('STEPS.find(s => s.id === "readiness")');
-  assert.match(step.title, /^Transition readiness \(available soon\)$/);
+  assert.match(step.title, /^Knowledge Transfer Report \(available soon\)$/);
   assert.match(step.intro, /^Available soon/);
   const follow = ["readiness_review", "org_chart", "accounts_list", "staff_questionnaire", "event_dates",
     "key_relationships", "disclosures", "readiness_confirmer"];

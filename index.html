@@ -68,7 +68,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 // ---- setup ----
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxEEbYBqoKwdWX9FUd5-R_zhf0I-DDJaA-ndThE-fd8xp5GagkFlgMFi34ecQ0lFZQ/exec";                    // The Google Apps Script web app URL (README, step 4)
 const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
-const FORM_VERSION = "2026-11-06.2"; // Change it whenever the questions change (README); the tests check.
+const FORM_VERSION = "2026-11-22"; // Change it whenever the questions change (README); the tests check.
 
 // ?client=<tag> on the link labels every answer with the client it was sent to.
 const CLIENT = (() => {
@@ -278,8 +278,8 @@ const STEPS = [
     qs: [
       { id: "continuity_services", type: "multi", label: "Which would help?", options: [
         ["summary", "Summaries of emails with a contact", "Every email with a person or organization, by month. A written summary of what was discussed uses AI, and only with your written approval."],
-        ["handover", "Relationship handover", "When someone with outside relationships leaves: every outside contact, conversations still open, and who is missing from your CRM."],
-        ["readiness", "Transition readiness (available soon)", "Prepare for a leadership change, grant audit, or sale: who does what, and which accounts depend on one person."]] },
+        ["handover", "Relationship Handover Report", "When someone with outside relationships leaves: every outside contact, conversations still open, and who is missing from your CRM."],
+        ["readiness", "Knowledge Transfer Report (available soon)", "Prepare for a leadership change, grant audit, or sale: who does what, and which accounts depend on one person."]] },
       { id: "summary_contacts", type: "textarea", label: "Whose emails with you should we summarize?", hint: "People or organizations, one per line.", show: a => has(a, "continuity_services", "summary") },
       { id: "handover_who", type: "text", label: "Whose relationships should we review?", hint: "Their role and work email address, for example \"Development Director, jo@example.org\".", show: a => has(a, "continuity_services", "handover") },
       { id: "handover_when", type: "date", label: "When is (or was) their last day?", show: a => has(a, "continuity_services", "handover") },
@@ -291,7 +291,7 @@ const STEPS = [
       { id: "handover_reviewer", type: "text", label: "Who will review the list before anyone acts on it?", show: a => has(a, "continuity_services", "handover") },
       { id: "deal_journey", type: "choice", label: "We're designing a way to show how long deals or gifts take, from first contact to a decision. Would you like to hear more, or take part in a pilot?", options: [["yes", "Yes, tell me more"], ["no", "Not now"]] },
     ] },
-  { id: "readiness", title: "Transition readiness (available soon)", show: a => wants(a, "continuity") && has(a, "continuity_services", "readiness"),
+  { id: "readiness", title: "Knowledge Transfer Report (available soon)", show: a => wants(a, "continuity") && has(a, "continuity_services", "readiness"),
     intro: "Available soon: it builds on the contract review, which opens with Clarity. Answering now means it's ready for you.",
     qs: [
       { id: "readiness_review", type: "multi", label: "Which review would help most?", options: [["leadership", "A leadership change"], ["grants", "Grant compliance"], ["succession", "A sale, succession or retirement"]] },
