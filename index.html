@@ -329,7 +329,7 @@ const STEPS = [
       { id: "compare_agreements", type: "textarea", label: "Agreements you'd like compared side by side", hint: "For example two vendors' contracts for the same service. Leave blank if none." },
       { id: "contracts_confirmer", type: "text", label: "Who will confirm the contract register?" },
     ] },
-  { id: "reminders", title: "Action-item reminders", show: anySuite,
+  { id: "reminders", title: "Deadline and Action Reminders", show: anySuite,
     qs: [
       { id: "reminders", type: "choice", label: "Would you like email reminders when someone is still waiting on a reply?", hint: "Reminders are offered with some plans and confirmed at the kickoff call. They come by email only.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "reminder_kinds", type: "multi", label: "Which kinds?", show: a => a.reminders === "yes", options: [["waiting", "Someone waiting on a reply"], ["deadline", "Deadlines in agreements (available soon)"], ["ending", "Agreements ending (available soon)"], ["decision", "Decisions waiting (available soon)"]] },
