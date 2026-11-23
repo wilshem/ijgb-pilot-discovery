@@ -60,10 +60,12 @@ test("retention periods are shown only to clients IJGB hosts", () => {
   }
 });
 
-test("Clarity says hosted agreements are processed on IJGB's encrypted work machine", () => {
+test("Clarity says hosted agreements are processed on IJGB's work machine, and AI steps go to Anthropic", () => {
   const p = page();
   const intro = p.val('STEPS.find(s => s.id === "clarity").intro');
-  assert.match(intro, /IJGB's own encrypted work machine/);
+  assert.match(intro, /IJGB's work machine/);
+  assert.doesNotMatch(intro, /encrypted/);
+  assert.match(intro, /Anthropic's API/);
   assert.match(intro, /not in the dedicated cloud account/);
   assert.doesNotMatch(intro, /own (cloud |AWS )?account/i);
 });
