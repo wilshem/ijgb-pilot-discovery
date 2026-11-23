@@ -260,3 +260,16 @@ test("no internal platform name in any public file", () => {
     assert.doesNotMatch(text, /private-intelligence-platform/i);
   }
 });
+
+test("the form promises no more than the platform does about masking and staff access", () => {
+  const p = page();
+  const qs = p.val("STEPS.flatMap(s => s.qs || [])");
+  const byId = id => qs.find(q => q.id === id);
+  assert.equal(byId("ai_reader").hint, "Optional, off unless you approve in writing. We mask common formats of " +
+    "Social Security, card and bank account numbers before any text reaches the AI. A person checks everything it suggests.");
+  assert.equal(byId("access_approver").hint, undefined);
+  const text = p.val("STEPS").map(s => JSON.stringify(s)).join("\n");
+  assert.doesNotMatch(text, /personal details masked/i);
+  assert.doesNotMatch(text, /staff (can't|cannot|can not|never) read/i);
+  assert.doesNotMatch(text, /by default/i);
+});

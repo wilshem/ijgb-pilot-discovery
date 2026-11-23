@@ -68,7 +68,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 // ---- setup ----
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxEEbYBqoKwdWX9FUd5-R_zhf0I-DDJaA-ndThE-fd8xp5GagkFlgMFi34ecQ0lFZQ/exec";                    // The Google Apps Script web app URL (README, step 4)
 const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
-const FORM_VERSION = "2026-11-22"; // Change it whenever the questions change (README); the tests check.
+const FORM_VERSION = "2026-11-23"; // Change it whenever the questions change (README); the tests check.
 
 // ?client=<tag> on the link labels every answer with the client it was sent to.
 const CLIENT = (() => {
@@ -251,7 +251,7 @@ const STEPS = [
       { id: "encryption_checked_on", type: "date", label: "On what date?", show: a => a.hosting === "local" && a.device_encryption === "yes" },
       { id: "residency", type: "choice", label: "Does your data need to stay in a particular place?", options: [["none", "No requirement"], ["us", "It must stay in the United States"], ["other", "Another requirement"], NOT_SURE] },
       { id: "users", type: "textarea", label: "Who will run searches or reviews?", hint: "Names and roles." },
-      { id: "access_approver", type: "text", label: "Who can approve IJGB staff reading your mail for a short support window?", hint: "IJGB staff can't read your mail by default. Access is granted to a named person for a window you approve." },
+      { id: "access_approver", type: "text", label: "Who can approve IJGB staff reading your mail for a short support window?" },
       { id: "sync_freq", type: "choice", label: "How often should new email be copied?", options: [["hourly", "Every hour (default)"], ["daily", "Once a day"], NOT_SURE] },
     ] },
   { id: "suites", title: "What you'd like help with",
@@ -325,7 +325,7 @@ const STEPS = [
       { id: "notice_address", type: "text", label: "Current mailing address for legal notices" },
       { id: "payments_file", type: "choice", label: "Could you export a list of payments (payee, amount, date)?", hint: "Optional. It helps find vendors with no agreement on file.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "scanned", type: "choice", label: "How many of your agreements are scans or photos?", options: [["most", "Most"], ["some", "Some"], ["few", "Few or none"], NOT_SURE] },
-      { id: "ai_reader", type: "choice", label: "May we use an AI reading assistant on your agreements?", hint: "Optional, off unless you approve in writing. It sees text with personal details masked, and a person checks everything it suggests.", options: [["yes", "Yes, we'll provide written approval"], ["no", "No"], ["discuss", "We'd like to discuss it"]] },
+      { id: "ai_reader", type: "choice", label: "May we use an AI reading assistant on your agreements?", hint: "Optional, off unless you approve in writing. We mask common formats of Social Security, card and bank account numbers before any text reaches the AI. A person checks everything it suggests.", options: [["yes", "Yes, we'll provide written approval"], ["no", "No"], ["discuss", "We'd like to discuss it"]] },
       { id: "compare_agreements", type: "textarea", label: "Agreements you'd like compared side by side", hint: "For example two vendors' contracts for the same service. Leave blank if none." },
       { id: "contracts_confirmer", type: "text", label: "Who will confirm the contract register?" },
     ] },
