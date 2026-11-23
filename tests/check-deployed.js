@@ -25,15 +25,16 @@ async function checkDeployed({ pages, codeVersions, get }) {
     res = await get(urls[0], { Origin: PAGE_ORIGIN });
     body = await res.text();
   } catch (e) { return [`could not reach the deployed script: ${e.message}`]; }
-  const acao = res.headers.get("access-control-allow-origin");
-  if (acao !== "*" && acao !== PAGE_ORIGIN) {
-    problems.push(`the deployed script's reply has no Access-Control-Allow-Origin for ${PAGE_ORIGIN} (got ${acao}): the page could not read it`);
-  }
   let deployed;
   try { deployed = JSON.parse(body).versions; } catch (e) { deployed = null; }
   if (!Array.isArray(deployed)) {
-    problems.push(`the deployed script has no version list (HTTP ${res.status}); it is older than this check. ${REDEPLOY}`);
-    return problems;
+    // Google's "function not found" page carries no CORS header either, so that is not judged here.
+    return [`the deployed script has no version list (HTTP ${res.status}); it is older than this check. ${REDEPLOY}`];
+  }
+  // Script replies (ContentService) carry Access-Control-Allow-Origin; without it the page can't read "ok".
+  const acao = res.headers.get("access-control-allow-origin");
+  if (acao !== "*" && acao !== PAGE_ORIGIN) {
+    problems.push(`the deployed script's reply has no Access-Control-Allow-Origin for ${PAGE_ORIGIN} (got ${acao}): the page could not read "ok" and would show an error for saved answers`);
   }
   for (const [label, html] of Object.entries(pages)) {
     const v = constant(html, "FORM_VERSION");

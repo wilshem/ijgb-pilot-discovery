@@ -95,7 +95,8 @@ test("check-deployed fails when Code.gs in the repo has a version the deployed s
 test("check-deployed fails on an old script with no version list, and on a reply the page can't read", async () => {
   let problems = await checkDeployed({ pages: { "live site": html("2026-11-23") }, codeVersions: ["2026-11-23"],
     get: reply("<html>Script function not found: doGet</html>") });
-  assert.ok(problems.some(m => /no version list/i.test(m)), problems.join("\n"));
+  assert.deepEqual(problems.length, 1, problems.join("\n"));
+  assert.match(problems[0], /no version list.*Redeploy/i);
   problems = await checkDeployed({ pages: { "live site": html("2026-11-23") }, codeVersions: ["2026-11-23"],
     get: reply('{"versions":["2026-11-23"]}', null) });
   assert.ok(problems.some(m => /Access-Control-Allow-Origin/.test(m)), problems.join("\n"));
