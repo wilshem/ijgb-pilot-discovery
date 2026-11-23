@@ -100,6 +100,12 @@ const VERSIONS = {
   ],
 };
 
+// GET: the form versions this deployment accepts, so a check (tests/check-deployed.js, run by CI)
+// can tell when the live page and the deployed script disagree. Nothing else is revealed.
+function doGet() {
+  return out(JSON.stringify({ versions: Object.keys(VERSIONS) }));
+}
+
 function doPost(e) {
   const data = check(e && e.postData ? e.postData.contents : "");
   if (!data) return out("rejected");

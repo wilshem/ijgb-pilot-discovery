@@ -1,0 +1,24 @@
+name: deployed-script
+# Fails when the deployed Code.gs would refuse what the page sends (tests/check-deployed.js).
+# On a pull request that changes FORM_VERSION or Code.gs it stays red until Code.gs is redeployed,
+# which is the safe order: redeploy first, then merge.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 13 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deployed-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check the deployed Code.gs
+        working-directory: tests
+        run: node check-deployed.js

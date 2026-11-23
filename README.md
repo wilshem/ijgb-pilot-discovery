@@ -34,8 +34,14 @@ Keep the sheet itself shared only with IJGB staff. "Anyone" in step 3 only lets 
 to the script; it does not let anyone open or read the sheet.
 
 If you change `Code.gs` later: **Deploy > Manage deployments**, edit the deployment, choose
-**New version**, and deploy. The URL stays the same. `Code.gs` accepts the current form version and
-the previous one, so it can be deployed before or after the page changes go live.
+**New version**, and deploy. The URL stays the same. Deploy it **before** merging the page change
+that needs it: `Code.gs` keeps accepting the earlier form versions, so the live page keeps working.
+
+The `deployed-script` check (`tests/check-deployed.js`, run on every pull request, after each merge
+and daily) asks the deployed script which versions it accepts (a GET, which writes nothing) and fails
+when this branch's page, the live site, or `Code.gs` here has a version the deployment lacks. On a
+pull request that changes `FORM_VERSION` or `Code.gs` it stays red until you redeploy: that is the
+reminder. It also fails if the script's reply could not be read by the page.
 
 ## Send it to a client
 
@@ -78,8 +84,10 @@ object with the submit code; a `form_version` listed in `VERSIONS`, and only tha
 (so a stray request cannot add columns); at most 200 keys, every value text of at most 5,000
 characters, and at most 100,000 characters in all; an organization name, a contact name and an
 email address that looks like one; a `client` tag of letters, digits and hyphens, or none; and a
-real `submitted_at` time. The page cannot see the reply, so a refused row still shows "Thank you":
-keep `VERSIONS` in step with the page (the tests check it).
+real `submitted_at` time. It replies `ok` only when the row was written. The page shows "Thank you"
+only for `ok`; a refusal, a failure or no reply shows an error with the address to email the answers
+to (`CONTACT_EMAIL` in `index.html`), and the answers stay on the device. Keep `VERSIONS` in step
+with the page (the tests check it; the `deployed-script` check checks the deployment).
 
 ## Change the questions
 
