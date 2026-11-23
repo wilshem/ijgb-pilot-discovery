@@ -166,7 +166,8 @@ test("device encryption asks who checked it and when, only on site and only afte
 test("retention states the standard periods and asks only about changes", () => {
   const p = page();
   const label = p.question("retention_change").label;
-  for (const words of ["90 days", "35 days", "365 days"]) assert.ok(label.includes(words), words);
+  for (const words of ["90 days", "35 days"]) assert.ok(label.includes(words), words);
+  assert.ok(!label.includes("365"), "no activity-log period: the platform's own log is kept with no limit");
   p.set({ ...CORE, hosting: "s3", retention_change: "no" });
   assert.ok(!p.qs("security").includes("retention_detail"));
   p.set({ ...CORE, hosting: "s3", retention_change: "yes" });
@@ -272,4 +273,10 @@ test("the form promises no more than the platform does about masking and staff a
   assert.doesNotMatch(text, /personal details masked/i);
   assert.doesNotMatch(text, /staff (can't|cannot|can not|never) read/i);
   assert.doesNotMatch(text, /by default/i);
+  // privacy review 1 part 2: P31, P12, P15, P16
+  assert.equal(p.val('optsOf(STEPS.flatMap(s => s.qs || []).find(q => q.id === "hosting"))')[0][2],
+    "A dedicated cloud account for your organization, in IJGB's AWS organization, with its own encryption key.");
+  assert.match(p.val('STEPS.find(s => s.id === "clarity").intro'), /Any AI step you approve sends the text it reads to Anthropic's API/);
+  assert.doesNotMatch(text, /shared with no other client|encrypted work machine|activity log|with confirmation/i);
+  assert.equal(byId("end_of_pilot").hint, "Deletion is done by hand today, not by an automatic step.");
 });

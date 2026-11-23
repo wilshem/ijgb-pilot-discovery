@@ -242,7 +242,7 @@ const STEPS = [
   { id: "hosting", title: "Where it runs and who uses it",
     qs: [
       { id: "hosting", type: "choice", store: "value", label: "Where would you prefer your copy of the email to live?", options: [
-        ["s3", "Hosted by IJGB", "A dedicated cloud account for your organization alone, encrypted, shared with no other client."],
+        ["s3", "Hosted by IJGB", "A dedicated cloud account for your organization, in IJGB's AWS organization, with its own encryption key."],
         ["local", "On a device at your office", "Your email copy stays on a computer you control."],
         ["not_sure", "Not sure: help us decide"]] },
       { id: "budget", type: "choice", label: "What monthly budget fits for hosting?", hint: "Hosting cost depends mostly on how much email you keep.", show: a => a.hosting !== "local", options: [["under_100", "Under $100"], ["100_250", "$100 to $250"], ["250_600", "$250 to $600"], ["over_600", "More than $600"], NOT_SURE] },
@@ -316,7 +316,7 @@ const STEPS = [
       { id: "dj_success", type: "textarea", label: "How would you judge whether it helped?" },
     ] },
   { id: "clarity", title: "Clarity: your agreements", show: a => wants(a, "clarity"),
-    intro: "Available soon. Answering now means it's ready for you when it opens. If IJGB hosts your email, your agreements are still reviewed on IJGB's own encrypted work machine, not in the dedicated cloud account.",
+    intro: "Available soon. Answering now means it's ready for you when it opens. If IJGB hosts your email, your agreements are still reviewed on IJGB's work machine, not in the dedicated cloud account. Any AI step you approve sends the text it reads to Anthropic's API (Claude).",
     qs: [
       { id: "agreements_where", type: "multi", label: "Where are your agreements kept?", options: [["shared_drive", "A shared drive or server"], ["sharepoint", "SharePoint or OneDrive"], ["gdrive", "Google Drive"], ["email", "Email attachments"], ["paper", "Paper files"], ["other", "Somewhere else"]] },
       { id: "agreements_other", type: "textarea", label: "Any other places agreements might be?", hint: "For example files a staff member keeps, or county records." },
@@ -343,9 +343,9 @@ const STEPS = [
       { id: "security_review_detail", type: "textarea", label: "What does it involve?", show: a => a.security_review === "yes" },
       { id: "regulated", type: "multi", label: "Might the mailboxes contain any of these?", options: [["health", "Health information"], ["student", "Student records"], ["card", "Payment card details"], ["personnel", "Personnel files"], ["none", "None of these"], NOT_SURE] },
       { id: "staff_policy", type: "choice", label: "Do your staff sign a technology or acceptable-use policy saying their work email may be reviewed?", hint: "Some states require written notice to staff before their work email is monitored. If not, we'll help you plan it before the pilot.", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
-      { id: "retention_change", type: "choice", show: a => a.hosting === "s3", label: "We keep earlier versions of changed or deleted mail for 90 days, backups for 35 days, and the activity log for 365 days. Do you need any of these changed?", options: [["no", "No"], ["yes", "Yes"], NOT_SURE] },
+      { id: "retention_change", type: "choice", show: a => a.hosting === "s3", label: "We keep earlier versions of changed or deleted mail for 90 days and backups for 35 days. Do you need either changed?", options: [["no", "No"], ["yes", "Yes"], NOT_SURE] },
       { id: "retention_detail", type: "textarea", label: "Which, and to how long?", show: a => a.hosting === "s3" && a.retention_change === "yes" },
-      { id: "end_of_pilot", type: "choice", label: "If you don't continue after the pilot, what should happen to your data?", options: [["delete", "Delete it, with confirmation"], ["handover", "Hand it over to us, then delete it"], ["later", "Decide later"]] },
+      { id: "end_of_pilot", type: "choice", label: "If you don't continue after the pilot, what should happen to your data?", hint: "Deletion is done by hand today, not by an automatic step.", options: [["delete", "Delete it"], ["handover", "Hand a copy over to us first, then delete it"], ["later", "Decide later"]] },
       { id: "accessibility", type: "choice", label: "Will anyone reading reports use assistive technology, such as a screen reader?", options: [["yes", "Yes"], ["no", "No"], NOT_SURE] },
       { id: "accessibility_detail", type: "textarea", label: "Tell us what would help", show: a => a.accessibility === "yes" },
       { id: "support_contact", type: "text", label: "Your main contact for day-to-day questions, and who will tell us about staff changes" },
