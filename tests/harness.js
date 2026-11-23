@@ -8,13 +8,18 @@ const CODE = fs.readFileSync(path.join(ROOT, "Code.gs"), "utf8");
 const LIVE = "https://wilshem.github.io/ijgb-pilot-discovery/";
 
 // The page at a URL (the live site by default). fetch is replaced so nothing leaves the machine;
-// sent holds each request the page made.
-function page({ url = LIVE, answers = null, html = HTML } = {}) {
+// sent holds each request the page made. reply is what the receiver answers ("ok" by default), or
+// an Error for a request that fails (no connection, or a reply the browser won't let the page read).
+function page({ url = LIVE, answers = null, html = HTML, reply = "ok" } = {}) {
   const sent = [];
   const dom = new JSDOM(html, {
     url, runScripts: "dangerously", pretendToBeVisual: true,
     beforeParse(w) {
-      w.fetch = async (u, opts) => { sent.push({ url: u, opts }); return { ok: true }; };
+      w.fetch = async (u, opts) => {
+        sent.push({ url: u, opts });
+        if (reply instanceof Error) throw reply;
+        return { ok: true, status: 200, text: async () => reply };
+      };
       w.scrollTo = () => {};
       if (answers) w.localStorage.setItem("ijgb-discovery:general", JSON.stringify({ step: "about", a: answers, submitted: false }));
     },

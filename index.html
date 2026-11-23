@@ -51,6 +51,9 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 .summary{white-space:pre-wrap;font-size:14.5px;background:var(--mist);border-radius:12px;padding:16px;max-height:420px;overflow:auto;overflow-wrap:anywhere}
 .status{margin-top:12px;font-weight:600}
 .status.ok{color:var(--ok)}
+.alert{margin-top:12px;padding:12px 14px;border:2px solid var(--warn);border-radius:8px;color:var(--ink)}
+.alert strong{color:var(--warn)}
+.alert a{color:var(--navy);font-weight:600}
 .foot{margin-top:56px;font-size:14px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap}
 .foot button{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 .tag{font-size:13px;color:var(--muted)}
@@ -69,6 +72,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxEEbYBqoKwdWX9FUd5-R_zhf0I-DDJaA-ndThE-fd8xp5GagkFlgMFi34ecQ0lFZQ/exec";                    // The Google Apps Script web app URL (README, step 4)
 const SUBMIT_CODE = "ijgb-discovery-26"; // Must match SUBMIT_CODE in Code.gs
 const FORM_VERSION = "2026-11-23"; // Change it whenever the questions change (README); the tests check.
+const CONTACT_EMAIL = "better@itjustgetsbetter.org"; // Shown when answers could not be saved
 
 // ?client=<tag> on the link labels every answer with the client it was sent to.
 const CLIENT = (() => {
@@ -523,13 +527,30 @@ async function submit() {
   }
   if (!SHEET_URL) { status.textContent = "Sending isn't set up yet. Please use \"Copy my answers\" and email them to your IJGB contact."; return; }
   btn.disabled = true; btn.textContent = "Sending...";
+  // A plain-text POST is a simple request (no preflight), and the receiver's reply can be read: "ok"
+  // only when the row was written. Anything else, or no reply, is never shown as "Thank you".
+  let reply = null;
   try {
-    await fetch(SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(record()) });
-    st.submitted = true; save(); render(); window.scrollTo(0, 0);
-  } catch (e) {
-    btn.disabled = false; btn.textContent = "Send to IJGB";
-    status.textContent = "Sending failed. Check your connection and try again, or use \"Copy my answers\" and email them.";
-  }
+    const res = await fetch(SHEET_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(record()) });
+    reply = (await res.text()).trim();
+  } catch (e) { reply = null; }
+  if (reply === "ok") { st.submitted = true; save(); render(); window.scrollTo(0, 0); return; }
+  btn.disabled = false; btn.textContent = "Send to IJGB";
+  status.textContent = "";
+  notSent(status, reply === "rejected" || reply === "error");
+}
+
+// The error shown when answers were not saved, or may not have been: what happened, and how to reach IJGB.
+function notSent(status, refused) {
+  const old = document.getElementById("not-sent"); if (old) old.remove();
+  const mail = "mailto:" + CONTACT_EMAIL + "?subject=" + encodeURIComponent("Discovery form answers" + (CLIENT ? " (" + CLIENT + ")" : ""));
+  const box = Object.assign(document.createElement("div"), { id: "not-sent", className: "alert" });
+  box.setAttribute("role", "alert");
+  box.innerHTML = (refused
+    ? "<p><strong>Your answers were not saved.</strong> Our form could not accept them, so nothing reached IJGB.</p>"
+    : "<p><strong>We couldn't confirm your answers arrived.</strong> The connection failed or the reply didn't come through.</p>") +
+    `<p>Your answers are still here on this device. Please use "Copy my answers" and email them to <a href="${esc(mail)}">${esc(CONTACT_EMAIL)}</a>, or try Send again later.</p>`;
+  status.after(box);
 }
 
 document.addEventListener("input", e => { if (e.target.name) { readInput(e.target); save(); } });
