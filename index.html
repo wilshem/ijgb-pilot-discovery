@@ -543,7 +543,7 @@ async function submit() {
 // The error shown when answers were not saved, or may not have been: what happened, and how to reach IJGB.
 function notSent(status, refused) {
   const old = document.getElementById("not-sent"); if (old) old.remove();
-  const mail = "mailto:" + CONTACT_EMAIL + "?subject=" + encodeURIComponent("Discovery form answers" + (CLIENT ? " (" + CLIENT + ")" : ""));
+  const mail = "mailto:" + CONTACT_EMAIL + "?subject=" + encodeURIComponent("Discovery form answers");
   const box = Object.assign(document.createElement("div"), { id: "not-sent", className: "alert" });
   box.setAttribute("role", "alert");
   box.innerHTML = (refused

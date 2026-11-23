@@ -41,7 +41,8 @@ for (const [reply, why] of [["rejected", "refused"], ["error", "the sheet failed
     assert.match(alert.textContent, /not saved|couldn't confirm/i);
     const mail = alert.querySelector('a[href^="mailto:"]');
     assert.ok(mail, "a way to reach IJGB");
-    assert.equal(mail.getAttribute("href").split("?")[0], "mailto:" + p.ev("CONTACT_EMAIL"));
+    assert.equal(mail.getAttribute("href"), "mailto:better@itjustgetsbetter.org?subject=Discovery%20form%20answers");
+    assert.equal(p.ev("CONTACT_EMAIL"), "better@itjustgetsbetter.org");
     assert.ok(p.w.document.querySelector('[data-act="copy"]'), "Copy my answers is offered");
     assert.equal(p.val("st.a.org_name"), CORE.org_name);
     const btn = p.w.document.querySelector('[data-act="submit"]');
