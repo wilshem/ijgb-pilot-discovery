@@ -1,0 +1,39 @@
+name: live-submit
+# Sends one invented row from the live form (tests/live-submit.js) and passes only if it shows
+# "Thank you". Weekly, by hand (Actions > live-submit > Run workflow), and after each merge to main,
+# once GitHub Pages has deployed it. Test rows are tagged ijgb-live-test and stay in the sheet.
+on:
+  schedule:
+    - cron: "23 14 * * 1"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["pages-build-deployment", "pages build and deployment"]
+    types: [completed]
+permissions:
+  contents: read
+concurrency:
+  group: live-submit
+  cancel-in-progress: false
+jobs:
+  live-submit:
+    if: >-
+      github.repository == 'wilshem/ijgb-pilot-discovery' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright and Chromium
+        working-directory: tests
+        run: |
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Send one row from the live form
+        working-directory: tests
+        run: node live-submit.js "${{ github.event.workflow_run.head_sha || github.sha }}"
