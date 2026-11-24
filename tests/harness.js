@@ -10,7 +10,7 @@ const LIVE = "https://wilshem.github.io/ijgb-pilot-discovery/";
 // The page at a URL (the live site by default). fetch is replaced so nothing leaves the machine;
 // sent holds each request the page made. reply is what the receiver answers ("ok" by default), or
 // an Error for a request that fails (no connection, or a reply the browser won't let the page read).
-function page({ url = LIVE, answers = null, html = HTML, reply = "ok" } = {}) {
+function page({ url = LIVE, answers = null, html = HTML, reply = "ok", stored = null } = {}) {
   const sent = [];
   const dom = new JSDOM(html, {
     url, runScripts: "dangerously", pretendToBeVisual: true,
@@ -21,6 +21,7 @@ function page({ url = LIVE, answers = null, html = HTML, reply = "ok" } = {}) {
         return { ok: true, status: 200, text: async () => reply };
       };
       w.scrollTo = () => {};
+      if (stored) for (const [k, v] of Object.entries(stored)) w.localStorage.setItem(k, v);
       if (answers) w.localStorage.setItem("ijgb-discovery:general", JSON.stringify({ step: "about", a: answers, submitted: false }));
     },
   });

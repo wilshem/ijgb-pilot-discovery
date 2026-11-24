@@ -43,6 +43,18 @@ when this branch's page, the live site, or `Code.gs` here has a version the depl
 pull request that changes `FORM_VERSION` or `Code.gs` it stays red until you redeploy: that is the
 reminder. It also fails if the script's reply could not be read by the page.
 
+## The live submission check
+
+The `live-submit` workflow (`tests/live-submit.js`) opens the live form in a headless browser, with
+invented answers tagged `client=ijgb-live-test`, presses **Send**, and passes only if the page says
+"Thank you" (which it does only when `Code.gs` saved the row). It runs weekly, after each merge to
+`main` once GitHub Pages has deployed that commit (it first waits until the site serves it), and by
+hand: **Actions > live-submit > Run workflow**. Each run adds one row to the sheet; the dashboard
+leaves `ijgb-live-test` rows out, and you can delete them by hand.
+
+GitHub turns off scheduled workflows in a repository with no commits for 60 days. If that happens,
+GitHub emails you; turn the workflow back on under **Actions > live-submit**.
+
 ## Send it to a client
 
 Give each client their own link, with a short tag for them:
