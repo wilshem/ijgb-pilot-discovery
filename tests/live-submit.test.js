@@ -39,7 +39,7 @@ test("the workflow runs weekly, on demand and after each Pages deployment of mai
   const y = fs.readFileSync(path.join(ROOT, ".github", "workflows", "live-submit.yml"), "utf8");
   assert.match(y, /^\s+schedule:\n\s+- cron: "[^"]+"/m);
   assert.match(y, /^\s+workflow_dispatch:/m);
-  assert.match(y, /workflow_run:\n\s+workflows: \["pages build and deployment"\]\n\s+types: \[completed\]/);
+  assert.match(y, /workflow_run:\n\s+workflows: \["pages-build-deployment", "pages build and deployment"\]\n\s+types: \[completed\]/);
   assert.match(y, /github\.event\.workflow_run\.conclusion == 'success'/);
   assert.match(y, /github\.event\.workflow_run\.head_branch == 'main'/);
   assert.match(y, /github\.repository == 'wilshem\/ijgb-pilot-discovery'/);
