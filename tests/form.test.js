@@ -266,11 +266,11 @@ test("the form promises no more than the platform does about masking and staff a
   const p = page();
   const qs = p.val("STEPS.flatMap(s => s.qs || [])");
   const byId = id => qs.find(q => q.id === id);
-  assert.equal(byId("ai_reader").hint, "Optional, off unless you approve in writing. We mask common formats of " +
-    "Social Security, card and bank account numbers before any text reaches the AI. A person checks everything it suggests.");
+  // No public masking claim until phase 2 passes the held-out measurement (privacy wording sheet, topic 1).
+  assert.equal(byId("ai_reader").hint, "Optional, off unless you approve in writing. A person checks everything it suggests.");
   assert.equal(byId("access_approver").hint, undefined);
   const text = p.val("STEPS").map(s => JSON.stringify(s)).join("\n");
-  assert.doesNotMatch(text, /personal details masked/i);
+  assert.doesNotMatch(text, /mask|redact/i);
   assert.doesNotMatch(text, /staff (can't|cannot|can not|never) read/i);
   assert.doesNotMatch(text, /by default/i);
   // privacy review 1 part 2: P31, P12, P15, P16
