@@ -6,7 +6,6 @@ on:
   schedule:
     - cron: "23 14 * * 1"
   workflow_dispatch:
-  pull_request:  # TEMPORARY: one measured run before merge; removed in the next commit
   workflow_run:
     workflows: ["pages build and deployment"]
     types: [completed]
