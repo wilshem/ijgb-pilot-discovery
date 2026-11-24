@@ -123,14 +123,14 @@ test("odd characters around a formula sign never make an answer a formula", () =
   for (const k of ["success", "sensitive_list", "first_request"]) assert.equal(row[h.indexOf(k)], answers[k], k);
 });
 
-// Not decided: Sheets may treat a value that starts with a tab or a carriage return and then "=" as a formula
-// (OWASP lists both as formula starters for spreadsheets). Proving it needs a live sheet, which a test may
-// not write to; guarding it needs a Code.gs change, so a redeploy.
-test("a tab or carriage return before a formula sign is stored as text", { todo: "needs a Code.gs change and a redeploy; Better's decision" }, () => {
+// OWASP lists a tab and a carriage return as spreadsheet formula starters too, so they are escaped as well
+// (Better's decision, 2026-11-24).
+test("a tab or carriage return first is stored as text", () => {
   const r = receiver();
-  r.post(good({ anything_else: "\t=1+1", success: "\r=1+1" }));
+  const answers = { anything_else: "\t=1+1", success: "\r=1+1", terms: "\tplain text" };
+  assert.equal(r.post(good(answers)), "ok");
   const h = r.header(), row = r.rows[0];
-  for (const k of ["anything_else", "success"]) assert.ok(row[h.indexOf(k)].startsWith("'"), k);
+  for (const [k, v] of Object.entries(answers)) assert.equal(row[h.indexOf(k)], "'" + v, k);
 });
 
 test("odd characters in the client tag, email or time are refused", () => {
