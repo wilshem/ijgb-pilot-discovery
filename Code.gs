@@ -181,10 +181,10 @@ function check(body) {
   return data;
 }
 
-// Stops text that starts with = + - @ from running as a formula in the sheet.
+// Stops text that starts with = + - @, a tab or a carriage return from running as a formula in the sheet.
 function clean(v) {
   const s = v === undefined || v === null ? "" : String(v);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
 }
 
 function out(msg) {
